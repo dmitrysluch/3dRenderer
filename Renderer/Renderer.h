@@ -1,17 +1,38 @@
 #pragma once
 #include <Eigen/Dense>
 #include <vector>
+#include <exception>
+
+#include "BasicMaterial.h"
+#include "MathHelpers.h"
 
 namespace renderer {
 using namespace Eigen;
 using namespace std;
 class IndicedTriangleRenderer {
    public:
+    const BasicMaterial *GetMaterial() const { return material_; }
+    void SetMaterial(const BasicMaterial *material) { material_ = material; }
+    const Globals *GetGlobals() const { return globals_; }
+    void SetGlobals(const Globals *globals) { globals_ = globals; }
     void SetVertexBuffer(const vector<Vector3f> *vertices) {
         vertices_ = vertices;
-        window_space_vertices_.resize(vertices->size());
+        screen_space_vertices_.resize(vertices->size());
     }
     const vector<Vector3f> *GetVertexBuffer() const { return vertices_; }
+    const vector<Vector3f> *GetNormals() const { return normals_; }
+    void SetNormals(const vector<Vector3f> *normals) {
+        normals_ = normals;
+        transformed_normals_.resize(normals_->size());
+        inverse_camera_space_z_.resize(normals_->size());
+    }
+    const vector<Vector2f> *GetTexcoords() const { return texcoords_; }
+    void SetTexcoords(const vector<Vector2f> *texcoords) {
+        texcoords_ = texcoords;
+        inverse_camera_space_z_.resize(texcoords_->size());
+    }
+    const vector<int> *GetIndices() const { return indices_; }
+    void SetIndices(const vector<int> *indices) { indices_ = indices; }
     void SetIndexBuffer(const vector<int> *indices) { indices_ = indices; }
     const vector<int> *GetIndexBuffer() const { return indices_; }
     void SetDepthBuffer(char *depth_buffer) { depth_buffer_ = depth_buffer; }
@@ -30,24 +51,41 @@ class IndicedTriangleRenderer {
         projection_ = projection;
     }
     void DrawIndexed();
-
    private:
+    struct VertexAttrs {
+        Vector3f vertex_;
+        Vector3f normal_;
+        Vector2f texcoord_;
+        float inv_z_;
+        VertexAttrs(const Vector3f &vertex) : vertex_(vertex) {}
+        static VertexAttrs Interpolate(const VertexAttrs& a, const VertexAttrs& b, float t, bool interpolate_normals,
+                                       bool interpolate_texcoords);
+    };
+
     Matrix4f object_, eye_, projection_, viewport_matrix_;
     Vector2i viewport_;
+
+    const BasicMaterial *material_ = nullptr;
+    const Globals *globals_ = nullptr;
+
     const vector<Vector3f> *vertices_=nullptr;
-    const vector<int> *indices_=nullptr;
-    vector<Vector3f> window_space_vertices_;
+    const vector<Vector3f> *normals_ = nullptr;
+    const vector<Vector2f> *texcoords_ = nullptr;
+    const vector<int> *indices_ = nullptr;
+    
+    vector<Vector3f> screen_space_vertices_;
+    vector<Vector3f> transformed_normals_;
+    vector<float> inverse_camera_space_z_;
+
     char *depth_buffer_=nullptr;
     char *render_target_=nullptr;
 
     void TransformVertices();
-    void DrawPixels();
-    void DrawPixel(const Vector2i &view_port_vertex, float depth);
+    void DrawAllAfterTransformation();
+    void DrawTriangle(int a, int b, int c);
+    /// <summary>Transforms vertex attributes is they are used by material then draws pixel using material</summary>
+    void DrawPixel(const Vector2i &view_port_vertex, float depth, const Vector3f &normal, const Vector2f &texcoord);
     bool CullFace(const Vector3f &a, const Vector3f &b, const Vector3f &c);
     bool DepthAndOwnershipTest(const Vector2i &a, float depth);
-    template <typename T>
-    static T Lerp(const T &from, const T &to, float t) {
-        return from * (1.f - t) + to * t;
-    }
 };
 }  // namespace renderer

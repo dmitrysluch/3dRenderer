@@ -70,19 +70,19 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>..;..\Renderer;..\gtest\include;$(IncludePath)</IncludePath>
+    <IncludePath>..\include;..\Renderer;..\gtest\include;$(IncludePath)</IncludePath>
     <LibraryPath>..\gtest\lib\Debug;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <IncludePath>..;..\Renderer;..\gtest\include;$(IncludePath)</IncludePath>
+    <IncludePath>..\include;..\Renderer;..\gtest\include;$(IncludePath)</IncludePath>
     <LibraryPath>..\gtest\lib\Debug;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>..;..\Renderer;..\gtest\include;$(IncludePath)</IncludePath>
+    <IncludePath>..\include;..\Renderer;..\gtest\include;$(IncludePath)</IncludePath>
     <LibraryPath>..\gtest\lib\Debug;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>..;..\Renderer;..\gtest\include;$(IncludePath)</IncludePath>
+    <IncludePath>..\Renderer;..\gtest\include;$(IncludePath);..\include</IncludePath>
     <LibraryPath>..\gtest\lib\Debug;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
