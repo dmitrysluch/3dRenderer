@@ -5,7 +5,7 @@
 namespace renderer {
 using namespace  Eigen;
 
-class BasicMaterial abstract {
+class BasicMaterial {
    public:
     virtual ~BasicMaterial() {}
     virtual bool RequireNormals() const = 0;

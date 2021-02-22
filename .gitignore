@@ -392,3 +392,5 @@ MigrationBackup/
 .idea/
 
 !gtest
+
+cmake-build-*

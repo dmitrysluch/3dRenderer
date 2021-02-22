@@ -1,5 +1,6 @@
 #pragma once
 #include "BasicMaterial.h"
+#include <algorithm>
 
 namespace renderer {
 class DrawNormals : public BasicMaterial {

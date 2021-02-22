@@ -88,8 +88,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * Property data type: bool. Default value: false
  */
 // ---------------------------------------------------------------------------
-#define AI_CONFIG_IMPORT_NO_SKELETON_MESHES \
-    "IMPORT_NO_SKELETON_MESHES"
+#define AI_CONFIG_IMPORT_NO_SKELETON_MESHES 1
 
 
 
@@ -128,8 +127,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * Property data type: integer.
  */
 // ---------------------------------------------------------------------------
-#define AI_CONFIG_PP_SBBC_MAX_BONES \
-    "PP_SBBC_MAX_BONES"
+#define AI_CONFIG_PP_SBBC_MAX_BONES 1
 
 
 // default limit for bone count

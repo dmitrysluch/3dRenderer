@@ -1,8 +1,8 @@
 #pragma once
 #include <Eigen/Dense>
 #include <vector>
+#include <memory>
 #include "BasicMaterial.h"
-#include <memory.h>
 
 namespace renderer {
 

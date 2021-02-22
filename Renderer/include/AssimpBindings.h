@@ -6,6 +6,7 @@
 #include <exception>
 #include "Mesh.h"
 #include "UnlitSolidColor.h"
+#include "DrawNormals.h"
 
 namespace renderer {
 class AssimpBindings {
@@ -36,13 +37,14 @@ class AssimpBindings {
                           result[i].texcoords.begin(), [](aiVector3D from) { return Vector2f(from.x, from.y); });
             }
             assert(scene->mMeshes[i]->HasFaces());
+            result[i].indices.resize(3 * scene->mMeshes[i]->mNumFaces);
             for (int j = 0; j < scene->mMeshes[i]->mNumFaces; ++j) {
                 assert(scene->mMeshes[i]->mFaces[j].mNumIndices == 3);
                 for (int k = 0; k < 3; ++k) {
                     result[i].indices[j * 3 + k] = scene->mMeshes[i]->mFaces[j].mIndices[k];
                 }
             }
-            result[i].material = make_unique<UnlitSolidColor>(Vector4f(1.0f, 1.0f, 0.3f, 1.0f));
+            result[i].material = make_unique<DrawNormals>();
         }
         return result;
     }

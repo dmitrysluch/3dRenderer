@@ -15,7 +15,7 @@ class Texture2D {
         memcpy(arr_, other.arr_, size_.x() * size_.y() * kPixelSize);
     }
     Texture2D(Texture2D &&other) noexcept : arr_(nullptr), size_(other.size_) {
-        swap(arr_, other.arr_);
+        swap(*this, other);
     }
     ~Texture2D() { delete[] arr_; }
     Texture2D &operator= (const Texture2D &other) {
@@ -28,8 +28,7 @@ class Texture2D {
         return *this;
     }
     Texture2D &operator=(Texture2D &&other) noexcept {
-        size_ = other.size_;
-        swap(arr_, other.arr_);
+        swap(*this, other);
         return *this;
     }
     char *RawData() const { return arr_; }
@@ -40,8 +39,8 @@ class Texture2D {
     // normalized float coordinates
     Vector4f SamplePixelBilinear(Vector2f a) const;
     friend void swap(Texture2D &lhv, Texture2D &rhv) {
-        swap(lhv.size_, rhv.size_);
-        swap(lhv.arr_, rhv.arr_);
+        std::swap(lhv.size_, rhv.size_);
+        std::swap(lhv.arr_, rhv.arr_);
     }
    private:
     static constexpr int kPixelSize = 4;
