@@ -11,7 +11,7 @@
 namespace renderer {
 class AssimpBindings {
    public:
-    static vector<SubMesh> LoadMeshFromFile(const string& file_name) {
+    static Mesh LoadMeshFromFile(const string& file_name, bool loadMaterial = true) {
         Assimp::Importer importer;
         const aiScene* scene = importer.ReadFile(file_name, aiProcess_Triangulate | aiProcess_JoinIdenticalVertices |
                                                                 aiProcess_SortByPType | aiProcess_GenNormals |
@@ -20,33 +20,35 @@ class AssimpBindings {
         if (!scene) {
             throw exception(importer.GetErrorString());
         }
-        vector<SubMesh> result(scene->mNumMeshes);
-        for (int i = 0; i < result.size(); ++i) {
-            result[i].vertices.resize(scene->mMeshes[i]->mNumVertices);
-            transform(scene->mMeshes[i]->mVertices, scene->mMeshes[i]->mVertices + result[i].vertices.size(),
-                      result[i].vertices.begin(), [](aiVector3D from) { return Vector3f(from.x, from.y, from.z); });
+        vector<SubMesh> submeshes(scene->mNumMeshes);
+        for (int i = 0; i < submeshes.size(); ++i) {
+            submeshes[i].vertices.resize(scene->mMeshes[i]->mNumVertices);
+            transform(scene->mMeshes[i]->mVertices, scene->mMeshes[i]->mVertices + submeshes[i].vertices.size(),
+                      submeshes[i].vertices.begin(), [](aiVector3D from) { return Vector3f(from.x, from.y, from.z); });
             if (scene->mMeshes[i]->HasNormals()) {
-                result[i].normals.resize(scene->mMeshes[i]->mNumVertices);
-                transform(scene->mMeshes[i]->mNormals, scene->mMeshes[i]->mNormals + result[i].normals.size(),
-                          result[i].normals.begin(), [](aiVector3D from) { return Vector3f(from.x, from.y, from.z); });
+                submeshes[i].normals.resize(scene->mMeshes[i]->mNumVertices);
+                transform(scene->mMeshes[i]->mNormals, scene->mMeshes[i]->mNormals + submeshes[i].normals.size(),
+                          submeshes[i].normals.begin(), [](aiVector3D from) { return Vector3f(from.x, from.y, from.z); });
             }
             if (scene->mMeshes[i]->HasTextureCoords(0)) {
-                result[i].texcoords.resize(scene->mMeshes[i]->mNumVertices);
+                submeshes[i].texcoords.resize(scene->mMeshes[i]->mNumVertices);
                 transform(scene->mMeshes[i]->mTextureCoords[0],
-                          scene->mMeshes[i]->mTextureCoords[0] + result[i].texcoords.size(),
-                          result[i].texcoords.begin(), [](aiVector3D from) { return Vector2f(from.x, from.y); });
+                          scene->mMeshes[i]->mTextureCoords[0] + submeshes[i].texcoords.size(),
+                          submeshes[i].texcoords.begin(), [](aiVector3D from) { return Vector2f(from.x, from.y); });
             }
             assert(scene->mMeshes[i]->HasFaces());
-            result[i].indices.resize(3 * scene->mMeshes[i]->mNumFaces);
+            submeshes[i].indices.resize(3 * scene->mMeshes[i]->mNumFaces);
             for (int j = 0; j < scene->mMeshes[i]->mNumFaces; ++j) {
                 assert(scene->mMeshes[i]->mFaces[j].mNumIndices == 3);
                 for (int k = 0; k < 3; ++k) {
-                    result[i].indices[j * 3 + k] = scene->mMeshes[i]->mFaces[j].mIndices[k];
+                    submeshes[i].indices[j * 3 + k] = scene->mMeshes[i]->mFaces[j].mIndices[k];
                 }
             }
-            result[i].material = make_unique<DrawNormals>();
         }
-        return result;
+        if (!loadMaterial) {
+            return Mesh(std::move(submeshes));
+        }
+
     }
 };
 }  // namespace renderer

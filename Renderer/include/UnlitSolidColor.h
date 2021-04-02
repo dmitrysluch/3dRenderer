@@ -4,15 +4,17 @@
 namespace renderer {
 class UnlitSolidColor : public BasicMaterial {
    public:
+    UnlitSolidColor() = delete;
+    UnlitSolidColor(const UnlitSolidColor &) = delete;
+    UnlitSolidColor &operator=(const UnlitSolidColor &) = delete;
     explicit UnlitSolidColor(const Vector4f& color)
         : color_(color) {
     }
 
-    Vector4f GetColor() const { return color_; }
-    void SetColor(Vector4f color) { color_ = color; }
+    [[nodiscard]] Vector4f GetColor() const { return color_; }
 
-    bool RequireNormals() const override { return false; }
-    bool RequireTexcoords() const override { return false; }
+    [[nodiscard]] bool RequireNormals() const override { return false; }
+    [[nodiscard]] bool RequireTexcoords() const override { return false; }
     Vector4f DrawPixel(const Globals* globals, const Vector2i& window_space_vertex, const Vector3f& normal,
                        const Vector2f& texcoord) const override;
 
