@@ -16,5 +16,6 @@ public:
     static float Clamp(float val) {
         return val > 1 ? 1 : (val < 0 ? 0 : val);
     }
+    static Eigen::Matrix4f GetProjectionMatrix(float fov_angle, float aspect_ratio, float far_clip_plane, float near_clip_plane);
 };
 }

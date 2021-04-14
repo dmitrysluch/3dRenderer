@@ -15,7 +15,7 @@ class AssimpBindings {
         Assimp::Importer importer;
         const aiScene* scene = importer.ReadFile(file_name, aiProcess_Triangulate | aiProcess_JoinIdenticalVertices |
                                                                 aiProcess_SortByPType | aiProcess_GenNormals |
-                                                                aiProcess_RemoveRedundantMaterials);
+                                                                aiProcess_RemoveRedundantMaterials | aiProcess_PreTransformVertices);
 
         if (!scene) {
             throw exception(importer.GetErrorString());

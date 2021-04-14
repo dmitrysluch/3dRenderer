@@ -19,14 +19,16 @@ class Mesh {
     Mesh(const Mesh &) = delete;
     Mesh &operator=(const Mesh &) = delete;
     explicit Mesh(vector<SubMesh> &&submeshes) { swap(submeshes, submeshes_); }
-    explicit Mesh(vector<SubMesh> &&submeshes, vector<shared_ptr<const BasicMaterial>> materials);
-    [[nodiscard]] size_t size() const noexcept { return submeshes_.size(); }
-    [[nodiscard]] const SubMesh &getSubmesh(size_t i) const noexcept { return submeshes_[i]; }
+    Mesh(vector<SubMesh> &&submeshes, MaterialVec materials);
+    [[nodiscard]] size_t Size() const noexcept { return submeshes_.size(); }
+    [[nodiscard]] const SubMesh &GetSubmesh(size_t i) const noexcept { return submeshes_[i]; }
+    [[nodiscard]] bool HasDefaultMaterials() const noexcept {return !default_materials_.empty(); }
     /// Returns default material for submesh. Nullptr if no default material provided
-    [[nodiscard]] shared_ptr<const BasicMaterial> getDefaultMaterial(size_t i) const noexcept;
+    [[nodiscard]] shared_ptr<const BasicMaterial> GetDefaultMaterial(size_t i) const noexcept;
+    [[nodiscard]] MaterialVec GetDefaultMaterials() const noexcept {return default_materials_; }
 
    private:
     vector<SubMesh> submeshes_;
-    vector<shared_ptr<const BasicMaterial>> default_materials_;
+    MaterialVec default_materials_;
 };
 }  // namespace renderer

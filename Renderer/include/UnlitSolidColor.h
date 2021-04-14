@@ -15,7 +15,7 @@ class UnlitSolidColor : public BasicMaterial {
 
     [[nodiscard]] bool RequireNormals() const override { return false; }
     [[nodiscard]] bool RequireTexcoords() const override { return false; }
-    Vector4f DrawPixel(const Globals* globals, const Vector2i& window_space_vertex, const Vector3f& normal,
+    Vector4f DrawPixel(const Vector2i& window_space_vertex, const Vector3f& normal,
                        const Vector2f& texcoord) const override;
 
    private:

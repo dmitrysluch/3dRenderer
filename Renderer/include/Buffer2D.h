@@ -11,15 +11,11 @@ class Buffer2D {
     Buffer2D(size_t x, size_t y) : x_(x), y_(y), flat_(x * y) {}
     Buffer2D(size_t x, const vector<T> &flat) : x_(x), flat_(flat) {
         y_ = flat_.size() / x_;
-        if (y_ * x_ != flat.size()) {
-            throw invalid_argument("x must be divisor of flat array size");
-        }
+        assert (y_ * x_ == flat.size() && "x must be divisor of flat array size");
     }
     Buffer2D(size_t x, vector<T> &&flat) : x_(x), flat_(flat) {
         y_ = flat_.size() / x_;
-        if (y_ * x_ != flat.size()) {
-            throw invalid_argument("x must be divisor of flat array size");
-        }
+        assert (y_ * x_ == flat.size() && "x must be divisor of flat array size");
     }
     Buffer2D(const vector<vector<T>> &nested) : x_(nested.size()) {
         if (!x_) {
@@ -29,9 +25,7 @@ class Buffer2D {
         y_ = nested[0].size();
         flat_.resize(x_ * y_);
         for (int i = 0; i < x_; ++i) {
-            if (nested[i].size() != y_) {
-                throw invalid_argument("sizes of slices don't match");
-            }
+            assert(nested[i].size() == y_ && "sizes of slices don't match");
             copy(nested[i].begin(), nested[i].end(), flat_.begin() + i * y_);
         }
     }

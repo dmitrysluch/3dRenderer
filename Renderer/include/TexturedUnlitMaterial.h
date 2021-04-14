@@ -13,7 +13,7 @@ class TexturedUnlitMaterial : public BasicMaterial {
     explicit TexturedUnlitMaterial(Buffer2D<ColorRGBA32> &&texture) : texture_(texture) {}
     virtual bool RequireNormals() const { return false; }
     virtual bool RequireTexcoords() const { return true; };
-    virtual Vector4f DrawPixel(const Globals* globals, const Vector2i& window_space_vertex, const Vector3f& normal,
+    virtual Vector4f DrawPixel(const Vector2i& window_space_vertex, const Vector3f& normal,
                                const Vector2f& texcoord) const {
         return BilinearSampler::SamplePixelBilinear(texture_, texcoord);
     }

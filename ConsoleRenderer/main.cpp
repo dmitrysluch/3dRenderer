@@ -25,7 +25,7 @@ int main(int argc, char **argv) {
 //  fill(&reinterpret_cast<float *>(depth)[0],
 //       &reinterpret_cast<float *>(depth)[kX * kY], 1.f);
 //  vector<SubMesh> mesh = AssimpBindings::LoadMeshFromFile("./Dildo.OBJ");
-//  IndicedTriangleRenderer rend;
+//  Renderer rend;
 //  rend.SetRenderTarget(rend_targ);
 //  rend.SetDepthBuffer(depth);
 //  rend.SetViewport(vp);

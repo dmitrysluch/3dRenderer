@@ -1,4 +1,5 @@
 #pragma once
+#include <memory>
 #include <Eigen/Dense>
 #include "Globals.h"
 
@@ -12,6 +13,7 @@ class BasicMaterial {
     virtual ~BasicMaterial() = default;
     [[nodiscard]] virtual bool RequireNormals() const = 0;
     [[nodiscard]] virtual bool RequireTexcoords() const = 0;
-    virtual Vector4f DrawPixel(const Globals* globals, const Vector2i& window_space_vertex, const Vector3f& normal, const Vector2f& texcoord) const = 0;
+    virtual Vector4f DrawPixel(const Vector2i& window_space_vertex, const Vector3f& normal, const Vector2f& texcoord) const = 0;
 };
+using MaterialVec = std::vector<std::shared_ptr<const BasicMaterial>>;
 }
