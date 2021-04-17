@@ -1,5 +1,4 @@
 #pragma once
-
 #include <assimp/postprocess.h>
 #include <assimp/scene.h>
 #include <assimp/Importer.hpp>
@@ -11,7 +10,7 @@
 namespace renderer {
 class AssimpBindings {
    public:
-    static Mesh LoadMeshFromFile(const string& file_name, bool loadMaterial = true) {
+    static shared_ptr<Mesh> LoadMeshFromFile(const string& file_name, bool loadMaterial = true) {
         Assimp::Importer importer;
         const aiScene* scene = importer.ReadFile(file_name, aiProcess_Triangulate | aiProcess_JoinIdenticalVertices |
                                                                 aiProcess_SortByPType | aiProcess_GenNormals |
@@ -46,7 +45,7 @@ class AssimpBindings {
             }
         }
         if (!loadMaterial) {
-            return Mesh(std::move(submeshes));
+            return make_shared<Mesh>(std::move(submeshes));
         }
 
     }

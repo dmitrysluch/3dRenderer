@@ -21,8 +21,8 @@ class Object {
    private:
     Object(string name, shared_ptr<Mesh> mesh, MaterialVec material_overrides)
         : name_(std::move(name)), mesh_(std::move(mesh)), material_overrides_(std::move(material_overrides)) {
-        assert(mesh && "Pointer to mesh must have value");
-        assert(name.find_first_not_of(" \t\n\r") != std::string::npos && "Name must have not whitespace characters");
+        assert(mesh_ && "Pointer to mesh must have value");
+        assert(name_.find_first_not_of(" \t\n\r") != std::string::npos && "Name must have not whitespace characters");
         assert(material_overrides_.empty() || material_overrides_.size() == mesh_->Size());
     }
     string name_;

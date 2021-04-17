@@ -49,6 +49,8 @@ class Renderer {
         projection_ = projection;
     }
     void DrawIndexed();
+    // Fills render target with specified color and depth with maximum depth
+    void Clear(ColorRGBA32 color);
    private:
     struct VertexAttrs {
         Vector3f vertex_;

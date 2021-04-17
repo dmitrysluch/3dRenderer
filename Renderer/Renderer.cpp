@@ -8,9 +8,9 @@ void renderer::Renderer::DrawIndexed() {
     assert(depth_buffer_ && "Depth buffer not set");
     assert(vertices_ && "Vertices not set");
     assert(indices_ && "Indices not set");
-    assert(material_->RequireNormals() && (!normals_ || normals_->size() != vertices_->size()) &&
+    assert((!material_->RequireNormals() || normals_ && normals_->size() == vertices_->size()) &&
            "Normals not set or doesn't match vertices size");
-    assert(material_->RequireTexcoords() && (!texcoords_ || texcoords_->size() != vertices_->size()) &&
+    assert((!material_->RequireTexcoords() || texcoords_ && texcoords_->size() == vertices_->size()) &&
            "Texcoords not set or doesn't match vertices size");
     TransformVertices();
     DrawAllAfterTransformation();
@@ -133,6 +133,11 @@ void renderer::Renderer::DrawPixel(const Vector2i& window_space_vertex, float de
 }
 
 bool renderer::Renderer::DepthAndOwnershipTest(const Vector2i& a, float depth) {
-    return a.x() >= 0 && a.x() < viewport_.x() && a.y() >= 0 && a.y() < viewport_.y() && depth >= -1.f &&
-           depth <= 1.f && depth < (*depth_buffer_)(a.x(), a.y());
+    return a.x() >= 0 && a.x() < render_target_->x() && a.y() >= 0 && a.y() < render_target_->y() && depth >= -1.f &&
+        depth <= 1.f && depth < (*depth_buffer_)(a.x(), a.y());
+}
+void renderer::Renderer::Clear(renderer::ColorRGBA32 color) {
+    int sz = render_target_->x() * render_target_->y();
+    fill(render_target_->data(), render_target_->data() + sz, color);
+    fill(depth_buffer_->data(), depth_buffer_->data() + sz, 1);
 }

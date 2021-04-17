@@ -2,15 +2,13 @@ cmake_minimum_required(VERSION 3.10)
 project(Renderer_cmake)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS 1)
-add_library(Renderer_cmake SHARED
-#        Renderer/include/AssimpBindings.h
+add_library(Renderer_cmake
+        Renderer/include/AssimpBindings.h
         Renderer/include/BasicMaterial.h
         Renderer/Camera.cpp
         Renderer/include/Camera.h
         Renderer/DrawNormals.cpp
         Renderer/include/DrawNormals.h
-        Renderer/Globals.cpp
-        Renderer/include/Globals.h
         Renderer/MathHelpers.cpp
         Renderer/include/MathHelpers.h
         Renderer/Mesh.cpp
@@ -32,12 +30,12 @@ add_library(Renderer_cmake SHARED
         Renderer/include/Kernel.h
         Renderer/Kernel.cpp
         Renderer/IView.cpp
-        Renderer/include/IView.h Renderer/include/Transform.h Renderer/Transform.cpp)
+        Renderer/include/IView.h Renderer/include/Transform.h Renderer/Transform.cpp Renderer/SDLView.cpp Renderer/include/SDLView.h)
 include_directories(include)
 # compile assimp and copy assimp.lib and assimp.dll (assimp.so and assimp.so.a) to the same folder that executable or just install assimp globally
-target_link_libraries(Renderer_cmake assimp)
+target_link_libraries(Renderer_cmake assimp SDL2)
 
-add_executable(ConsoleRenderer_cmake
+add_executable(ConsoleRenderer_cmake WIN32
         ConsoleRenderer/main.cpp)
 
 target_include_directories(ConsoleRenderer_cmake PUBLIC Renderer/include)

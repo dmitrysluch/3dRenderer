@@ -1,64 +1,89 @@
-#include <fstream>
-
 #include <AssimpBindings.h>
-#include <Mesh.h>
 #include <Camera.h>
 #include <DrawNormals.h>
-#include <Renderer.h>
-#include <TexturedUnlitMaterial.h>
-#include <DrawNormals.h>
-#include <SubMesh.h>
+#include <UnlitSolidColor.h>
+#include <Kernel.h>
+#include <Object.h>
+#include <SDL2/SDL.h>
+#include <SDLView.h>
+#include <windows.h>
+#include <sstream>
+#include <BasicMaterial.h>
+#include <Transform.h>
 
 using namespace renderer;
 using namespace Eigen;
 
-// Better save space (not)
-const int kX = 1920;
-const int kY = 1080;
-const int kPixelSz = 4;
-char rend_targ[kX * kY * kPixelSz];
-char depth[kX * kY * 4];
+#undef main
+int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrev, LPSTR szCmdLine, int sw) {
+    SDL_SetMainReady();
+    SDL_Window *main_window_ = SDL_CreateWindow("Renderer from scratch", SDL_WINDOWPOS_UNDEFINED,
+                                                SDL_WINDOWPOS_UNDEFINED, 800, 600, SDL_WINDOW_RESIZABLE);
+    auto view = make_unique<SDLView>(main_window_);
+    Renderer renderer;
+    renderer.SetRenderTarget(&view->GetRenderTarget());
+    renderer.SetDepthBuffer(&view->GetDepthBuffer());
+    renderer.SetViewport(Vector2i(view->GetRenderTarget().x(), view->GetRenderTarget().y()));
 
-int main(int argc, char **argv) {
-//  Vector2i vp(kX, kY);
-//  memset(rend_targ, 100, kX * kY * kPixelSz);
-//  fill(&reinterpret_cast<float *>(depth)[0],
-//       &reinterpret_cast<float *>(depth)[kX * kY], 1.f);
-//  vector<SubMesh> mesh = AssimpBindings::LoadMeshFromFile("./Dildo.OBJ");
-//  Renderer rend;
-//  rend.SetRenderTarget(rend_targ);
-//  rend.SetDepthBuffer(depth);
-//  rend.SetViewport(vp);
-//  rend.SetObjectTransform(Projective3f(Translation3f(0, 0, 4) * AngleAxisf(1.1f * AI_MATH_PI, Vector3f::UnitY())).matrix());
-//  PerspectiveCamera camera;
-//  camera.SetFovAngleDeg(60);
-//  camera.SetViewport(vp);
-//  camera.SetFarClipPlane(100);
-//  camera.SetNearClipPlane(0.1);
-//  Projective3f transform = static_cast<Projective3f>(Translation3f(0, 2, -12));
-//  rend.SetEyeAndProjectionMatrices(transform.inverse().matrix(),
-//                                   camera.GetProjectionMatrix());
-////rend.SetObjectTransform(Matrix4f::Identity());
-//  for (const auto &m : mesh) {
-//    rend.SetVertexBuffer(&m.vertices);
-//    rend.SetNormals(&m.normals);
-//    rend.SetTexcoords(&m.texcoords);
-//    rend.SetIndexBuffer(&m.indices);
-//    rend.SetMaterial(m.material.get());
-//    rend.DrawIndexed();
-//  }
+    auto dickMesh = AssimpBindings::LoadMeshFromFile("Dildo.OBJ", false);
+    auto color = Eigen::Vector4f(1.f, 1.f, 1.f, 1.f);
+    auto mat = new UnlitSolidColor(color);
+
+//    renderer.SetVertices(&dickMesh->GetSubmesh(0).vertices);
+//    renderer.SetIndices(&dickMesh->GetSubmesh(0).indices);
+//    renderer.SetMaterial(mat);
 //
-//  // Texture2D texture_2d(500, 500);
-//  // ifstream fin("texture.raw", ios::binary | ios::in);
-//  // fin.read(texture_2d.RawData(), 500 * 500 * 4);
-//  // fin.close();
-//  // TexturedUnlitMaterial textured_mat(texture_2d);
-//  // rend.SetMaterial(&textured_mat);
+//    renderer.SetObjectTransform(Projective3f(Translation3f(0, 0, 4) * AngleAxisf(1.1f * AI_MATH_PI, Vector3f::UnitY())).matrix());
+//    renderer.SetEyeAndProjectionMatrices(static_cast<Projective3f>(Translation3f(0, 2, -12)).inverse().matrix(), MathHelpers::GetProjectionMatrix(30, 4.0/4, 100, 0.01));
 //
-//  ofstream fout("frame.raw", ios::binary | ios::out | ios::trunc);
-//  fout.write(rend_targ, kX * kY * kPixelSz);
-//  fout.close();
-//  system("wsl -e rm -f ./frame.png");
-//  system("wsl -e ffmpeg -f rawvideo -s 1920x1080 -pix_fmt rgba -i ./frame.raw ./frame.png");
-//  system("wsl -e rm -f ./frame.raw");
+//    renderer.Clear(ColorRGBA32({100, 100, (char)200, (char)225}));
+//    renderer.DrawIndexed();
+    view->Blit();
+//    KernelInitializer initializer(make_unique<SDLView>(main_window_));
+//
+//    auto mainCamera = Camera::New("Main camera");
+//    mainCamera->SetTransform({Vector3f(0, 2, -12), Quaternionf::Identity(), Vector3f::Ones()});
+//    mainCamera->SetAspectRatio(4.0/3);
+//    mainCamera->SetFovAngle(60);
+//    mainCamera->SetNearClipPlane(0.1);
+//    mainCamera->SetFarClipPlane(100);
+//
+//    auto dickMesh = AssimpBindings::LoadMeshFromFile("Dildo.OBJ", false);
+//    auto color = Eigen::Vector4f(1.f, 1.f, 1.f, 1.f);
+//    auto  mat = new UnlitSolidColor(color);
+//    auto normalsMat = make_shared<const DrawNormals>();
+//    auto dick = Object::New("Dildo", dickMesh, MaterialVec({normalsMat}));
+//    dick->TransformProxy().SetPosition(Vector3f(0, 0, 4));
+//    dick->TransformProxy().SetRotation(static_cast<Quaternionf>(AngleAxisf(1.1f * AI_MATH_PI, Vector3f::UnitY())));
+////    for (int i = 0; i < 1; ++i) {
+////        ostringstream name;
+////        name << "Dick " << i;
+////        auto obj = Object::New(name.str(), dickMesh, MaterialVec({normalsMat}));
+////        obj->TransformProxy().SetPosition(Vector3f(i - 2.5f, 0.f, 0.f));
+////    }
+//
+//    KernelAccessor()->SetActive(true); // Now Kernel will rerender on each object change
+
+    while (true) {
+        SDL_Event event;
+        while (SDL_PollEvent(&event)) {
+            if (event.type == SDL_QUIT) {
+                SDL_DestroyWindow(main_window_);
+                SDL_Quit();
+                return 0;
+            }
+
+//            else if (event.type == SDL_KEYDOWN) { // These is temprorary and should be moved to controllers
+//                if (event.key.keysym.sym == SDLK_UP) {
+//                    dick->TransformProxy().SetPosition(dick->GetTransform().position +  Vector3f(0, 0, 1));
+//                } else if (event.key.keysym.sym == SDLK_DOWN) {
+//                    dick->TransformProxy().SetPosition(dick->GetTransform().position -  Vector3f(0, 0, 1));
+//                } else if (event.key.keysym.sym == SDLK_LEFT) {
+//                    dick->TransformProxy().SetPosition(dick->GetTransform().position -  Vector3f(1, 0, 0));
+//                } else if (event.key.keysym.sym == SDLK_RIGHT) {
+//                    dick->TransformProxy().SetPosition(dick->GetTransform().position +  Vector3f(1, 0, 0));
+//                }
+//            }
+        }
+    }
 }

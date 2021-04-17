@@ -8,6 +8,7 @@ using namespace std;
 template <typename T>
 class Buffer2D {
    public:
+    Buffer2D(): x_(0), y_(0){}
     Buffer2D(size_t x, size_t y) : x_(x), y_(y), flat_(x * y) {}
     Buffer2D(size_t x, const vector<T> &flat) : x_(x), flat_(flat) {
         y_ = flat_.size() / x_;
@@ -32,6 +33,7 @@ class Buffer2D {
     T &operator()(size_t i, size_t j) { return flat_[i * y_ + j]; }
     const T &operator()(size_t i, size_t j) const { return flat_[i * y_ + j]; }
     const T *data() const noexcept { return flat_.data(); }
+    T *data() noexcept { return flat_.data(); }
     [[nodiscard]] inline size_t x() const { return x_; }
     [[nodiscard]] inline size_t y() const { return y_; }
 

@@ -1,11 +1,12 @@
+#pragma once
 #include <Eigen/Dense>
 #include <functional>
 
 namespace renderer {
 struct SceneTransform {
-    Eigen::Vector3f position;
-    Eigen::Quaternionf rotation;
-    Eigen::Vector3f scale;
+    Eigen::Vector3f position = {0, 0, 0};
+    Eigen::Quaternionf rotation = Eigen::Quaternionf::Identity();
+    Eigen::Vector3f scale = {1, 1, 1};
     [[nodiscard]] Eigen::Matrix4f GetTransformMatrix() const {
         Eigen::Projective3f transform;
         transform.fromPositionOrientationScale(position, rotation, scale);
@@ -29,6 +30,6 @@ class SceneTransformProxy {
     }
    private:
     SceneTransform *transform_;
-    function<void()> callback_;
+    std::function<void()> callback_;
 };
 } // namespace renderer

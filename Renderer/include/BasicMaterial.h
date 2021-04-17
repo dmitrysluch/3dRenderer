@@ -1,7 +1,6 @@
 #pragma once
 #include <memory>
 #include <Eigen/Dense>
-#include "Globals.h"
 
 namespace renderer {
 using namespace  Eigen;
