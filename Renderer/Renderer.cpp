@@ -6,6 +6,8 @@ void renderer::Renderer::DrawIndexed() {
     assert(material_ && "Material not set");
     assert(render_target_ && "Render target not set");
     assert(depth_buffer_ && "Depth buffer not set");
+    assert(render_target_->x() == depth_buffer_->x() && render_target_->y() == depth_buffer_->y() &&
+           "Depth buffer dimentions doesn't match those of render target");
     assert(vertices_ && "Vertices not set");
     assert(indices_ && "Indices not set");
     assert((!material_->RequireNormals() || normals_ && normals_->size() == vertices_->size()) &&
@@ -17,6 +19,9 @@ void renderer::Renderer::DrawIndexed() {
 }
 
 void renderer::Renderer::TransformVertices() {
+#ifdef _OPENMP
+    #pragma omp parallel for num_threads(8)
+#endif
     for (int i = 0; i < vertices_->size(); ++i) {
         auto camera_space_coords = eye_ * (object_ * (*vertices_)[i].homogeneous());
         if (material_->RequireNormals() || material_->RequireTexcoords()) {
@@ -25,6 +30,9 @@ void renderer::Renderer::TransformVertices() {
         screen_space_vertices_[i] = (viewport_matrix_ * (projection_ * camera_space_coords)).hnormalized();
     }
     if (material_->RequireNormals()) {
+#ifdef _OPENMP
+#pragma omp parallel for num_threads(8)
+#endif
         for (int i = 0; i < normals_->size(); ++i) {
             transformed_normals_[i] = object_.topLeftCorner(3, 3).transpose().inverse() * (*normals_)[i];
         }
@@ -83,24 +91,24 @@ void renderer::Renderer::DrawTriangle(int ind_a, int ind_b, int ind_c) {
     if (d.vertex_.x() < b.vertex_.x()) {
         swap(b, d);
     }
-    for (int i = a.vertex_.y(); i >= b.vertex_.y(); --i) {
+    for (int i = min<int>(a.vertex_.y(), render_target_->y() - 1); i >= b.vertex_.y() && i >= 0; --i) {
         const float ty = (i - a.vertex_.y()) / (b.vertex_.y() - a.vertex_.y());
         VertexAttrs from =
             VertexAttrs::Interpolate(a, b, ty, material_->RequireNormals(), material_->RequireTexcoords());
         VertexAttrs to = VertexAttrs::Interpolate(a, d, ty, material_->RequireNormals(), material_->RequireTexcoords());
-        for (int j = from.vertex_.x(); j <= to.vertex_.x(); ++j) {
+        for (int j = max<int>(from.vertex_.x(), 0); j <= to.vertex_.x() && j < render_target_->x(); ++j) {
             const float tx = (j - from.vertex_.x()) / (to.vertex_.x() - from.vertex_.x());
             VertexAttrs attrs =
                 VertexAttrs::Interpolate(from, to, tx, material_->RequireNormals(), material_->RequireTexcoords());
             DrawPixel(Vector2i(j, i), attrs.vertex_.z(), attrs.normal_, attrs.texcoord_);
         }
     }
-    for (int i = ceil(c.vertex_.y()); i <= b.vertex_.y(); ++i) {
+    for (int i = max<int>(ceil(c.vertex_.y()), 0); i <= b.vertex_.y() && i < render_target_->y(); ++i) {
         float ty = (i - c.vertex_.y()) / (b.vertex_.y() - c.vertex_.y());
         VertexAttrs from =
             VertexAttrs::Interpolate(c, b, ty, material_->RequireNormals(), material_->RequireTexcoords());
         VertexAttrs to = VertexAttrs::Interpolate(c, d, ty, material_->RequireNormals(), material_->RequireTexcoords());
-        for (int j = ceil(from.vertex_.x()); j <= to.vertex_.x(); ++j) {
+        for (int j = max<int>(ceil(from.vertex_.x()), 0); j <= to.vertex_.x() && j < render_target_->x(); ++j) {
             const float tx = (j - from.vertex_.x()) / (to.vertex_.x() - from.vertex_.x());
             VertexAttrs attrs =
                 VertexAttrs::Interpolate(from, to, tx, material_->RequireNormals(), material_->RequireTexcoords());
@@ -109,6 +117,9 @@ void renderer::Renderer::DrawTriangle(int ind_a, int ind_b, int ind_c) {
     }
 }
 void renderer::Renderer::DrawAllAfterTransformation() {
+#ifdef _OPENMP
+#pragma omp parallel for num_threads(8)
+#endif
     for (int k = 0; k < indices_->size(); k += 3) {
         DrawTriangle((*indices_)[k], (*indices_)[k + 1], (*indices_)[k + 2]);
     }
@@ -122,19 +133,18 @@ bool renderer::Renderer::CullFace(const Vector3f& a, const Vector3f& b, const Ve
 
 void renderer::Renderer::DrawPixel(const Vector2i& window_space_vertex, float depth, const Vector3f& normal,
                                    const Vector2f& texcoord) {
-    if (DepthAndOwnershipTest(window_space_vertex, depth)) {
+    if (DepthTest(window_space_vertex, depth)) {
         Vector4f color = material_->DrawPixel(window_space_vertex, normal, texcoord);
-        (*depth_buffer_)(window_space_vertex.x(), window_space_vertex.y()) = depth;
+        (*depth_buffer_)(window_space_vertex.x() , render_target_->y() - 1 - window_space_vertex.y()) = depth;
         for (int i = 0; i < 4; ++i) {
-            (*render_target_)(window_space_vertex.x(), window_space_vertex.y()).val[i] =
+            (*render_target_)(window_space_vertex.x(), render_target_->y() - 1 - window_space_vertex.y()).val[i] =
                 static_cast<char>(MathHelpers::Clamp(color[i]) * 255);
         }
     }
 }
 
-bool renderer::Renderer::DepthAndOwnershipTest(const Vector2i& a, float depth) {
-    return a.x() >= 0 && a.x() < render_target_->x() && a.y() >= 0 && a.y() < render_target_->y() && depth >= -1.f &&
-        depth <= 1.f && depth < (*depth_buffer_)(a.x(), a.y());
+bool renderer::Renderer::DepthTest(const Vector2i& a, float depth) {
+    return depth >= -1.f && depth <= 1.f && depth < (*depth_buffer_)(a.x(), render_target_->y() - 1 -a.y());
 }
 void renderer::Renderer::Clear(renderer::ColorRGBA32 color) {
     int sz = render_target_->x() * render_target_->y();

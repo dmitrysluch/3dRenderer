@@ -5,7 +5,6 @@ using std::string;
 renderer::Kernel::Kernel(std::unique_ptr<renderer::IView> view) : view_(std::move(view)) {
     renderer_.SetRenderTarget(&view_->GetRenderTarget());
     renderer_.SetDepthBuffer(&view_->GetDepthBuffer());
-    renderer_.SetViewport(Eigen::Vector2i(view_->GetRenderTarget().x(), view_->GetRenderTarget().y()));
 }
 renderer::Object* renderer::Kernel::GetObjectPtr(const string& name) {
     auto iter = find_if(objects_.cbegin(), objects_.cend(),

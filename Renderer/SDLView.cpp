@@ -1,5 +1,6 @@
 #include "include/SDLView.h"
 #include <fstream>
+#include "include/MathHelpers.h"
 renderer::SDLView::SDLView(SDL_Window  *window): main_window_(window) {
     main_renderer_ = SDL_CreateRenderer(main_window_, -1, SDL_RENDERER_ACCELERATED);
     int w, h;

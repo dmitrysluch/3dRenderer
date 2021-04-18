@@ -2,6 +2,9 @@ cmake_minimum_required(VERSION 3.10)
 project(Renderer_cmake)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS 1)
+if (MSVC)
+    add_compile_options(/openmp /DEIGEN_DONT_PARALLELIZE)
+endif()
 add_library(Renderer_cmake
         Renderer/include/AssimpBindings.h
         Renderer/include/BasicMaterial.h

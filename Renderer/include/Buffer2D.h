@@ -25,13 +25,13 @@ class Buffer2D {
         }
         y_ = nested[0].size();
         flat_.resize(x_ * y_);
-        for (int i = 0; i < x_; ++i) {
-            assert(nested[i].size() == y_ && "sizes of slices don't match");
-            copy(nested[i].begin(), nested[i].end(), flat_.begin() + i * y_);
+        for (int i = 0; i < y_; ++i) {
+            assert(nested[i].size() == x_ && "sizes of slices don't match");
+            copy(nested[i].begin(), nested[i].end(), flat_.begin() + i * x_);
         }
     }
-    T &operator()(size_t i, size_t j) { return flat_[i * y_ + j]; }
-    const T &operator()(size_t i, size_t j) const { return flat_[i * y_ + j]; }
+    T &operator()(size_t x, size_t y) { return flat_[y * x_ + x]; }
+    const T &operator()(size_t x, size_t y) const { return flat_[y * x_ + x]; }
     const T *data() const noexcept { return flat_.data(); }
     T *data() noexcept { return flat_.data(); }
     [[nodiscard]] inline size_t x() const { return x_; }

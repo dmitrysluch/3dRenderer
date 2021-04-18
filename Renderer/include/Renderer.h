@@ -2,6 +2,7 @@
 #include <Eigen/Dense>
 #include <vector>
 #include <exception>
+#include <algorithm>
 
 #include "BasicMaterial.h"
 #include "MathHelpers.h"
@@ -35,13 +36,11 @@ class Renderer {
     void SetIndices(const vector<int> *indices) { indices_ = indices; }
     void SetDepthBuffer(Buffer2D<float> *depth_buffer) { depth_buffer_ = depth_buffer; }
     [[nodiscard]] Buffer2D<float> *GetDepthBuffer() { return depth_buffer_; }
-    void SetRenderTarget(Buffer2D<ColorRGBA32> *render_target) { render_target_ = render_target; }
-    [[nodiscard]] Buffer2D<ColorRGBA32> *GetRenderTarget() { return render_target_; }
-    void SetViewport(const Vector2i &viewport) {
-        viewport_ = viewport;
-        viewport_matrix_ << viewport_.x()/2, 0.f, 0.f, viewport_.x()/2, 0.f, viewport_.y()/2, 0.f, viewport_.y()/2, 0.f, 0.f, 1.f, 0.f, 0.f, 0.f, 0.f, 1.f;
+    void SetRenderTarget(Buffer2D<ColorRGBA32> *render_target) {
+        render_target_ = render_target;
+        viewport_matrix_ << render_target_->x()/2.f, 0.f, 0.f, render_target_->x()/2.f, 0.f, render_target_->y()/2.f, 0.f, render_target_->y()/2.f, 0.f, 0.f, 1.f, 0.f, 0.f, 0.f, 0.f, 1.f;
     }
-    [[nodiscard]] Vector2i GetViewport() const { return viewport_; }
+    [[nodiscard]] Buffer2D<ColorRGBA32> *GetRenderTarget() { return render_target_; }
     void SetObjectTransform(const Matrix4f &object) { object_ = object; }
     [[nodiscard]] const Matrix4f &GetObjectTransform() const { return object_; }
     void SetEyeAndProjectionMatrices(const Matrix4f &eye, const Matrix4f &projection) {
@@ -63,7 +62,6 @@ class Renderer {
     };
 
     Matrix4f object_, eye_, projection_, viewport_matrix_;
-    Vector2i viewport_;
 
     const BasicMaterial *material_ = nullptr;
 
@@ -81,10 +79,10 @@ class Renderer {
 
     void TransformVertices();
     void DrawAllAfterTransformation();
-    void DrawTriangle(int a, int b, int c);
+    inline void DrawTriangle(int a, int b, int c);
     /// <summary>Transforms vertex attributes is they are used by material then draws pixel using material</summary>
-    void DrawPixel(const Vector2i &view_port_vertex, float depth, const Vector3f &normal, const Vector2f &texcoord);
+    inline void DrawPixel(const Vector2i &view_port_vertex, float depth, const Vector3f &normal, const Vector2f &texcoord);
     static bool CullFace(const Vector3f &a, const Vector3f &b, const Vector3f &c);
-    bool DepthAndOwnershipTest(const Vector2i &a, float depth);
+    inline bool DepthTest(const Vector2i &a, float depth);
 };
 }  // namespace renderer
