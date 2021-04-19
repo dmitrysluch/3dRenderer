@@ -1,23 +1,14 @@
 #include "gtest/gtest.h"
-#include "Camera.h"
+#include "MathHelpers.h"
 
 using namespace renderer;
+using namespace Eigen;
 
 #define TEST_EPS 1e-6
 
-class CameraTest : public testing::Test {
-protected:
-    PerspectiveCamera camera_;
-    void SetUp() override {
-        camera_.SetFarClipPlane(10);
-        camera_.SetNearClipPlane(1);
-        camera_.SetAspectRatio(2);
-        camera_.SetFovAngleDeg(90);
-    }
-};
 
-TEST_F(CameraTest, TestProjectionXY) {
-    auto matrix = camera_.GetProjectionMatrix();
+TEST(TestProjection, TestProjectionXY) {
+    auto matrix = MathHelpers::GetProjectionMatrix(90.0 / 180 * EIGEN_PI, 2, 10, 1);
     Vector3f vec = (matrix * Vector4f(0, 0, 1, 1)).hnormalized();
     EXPECT_NEAR(vec.x(), 0, TEST_EPS);
     EXPECT_NEAR(vec.y(), 0, TEST_EPS);
@@ -32,8 +23,8 @@ TEST_F(CameraTest, TestProjectionXY) {
     EXPECT_NEAR(vec.y(), 0.7, TEST_EPS);
 }
 
-TEST_F(CameraTest, TestProjectionZ) {
-  auto matrix = camera_.GetProjectionMatrix();
+TEST(TestProjection, TestProjectionZ) {
+  auto matrix = MathHelpers::GetProjectionMatrix(90.0 / 180 * EIGEN_PI, 2, 10, 1);
   Vector3f vec = (matrix * Vector4f(0, 0, 1, 1)).hnormalized();
   EXPECT_NEAR(vec.z(), -1, TEST_EPS);
   vec = (matrix * Vector4f(0, 0, 10, 1)).hnormalized();

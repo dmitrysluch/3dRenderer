@@ -44,5 +44,9 @@ add_executable(ConsoleRenderer_cmake WIN32
 target_include_directories(ConsoleRenderer_cmake PUBLIC Renderer/include)
 target_link_libraries(ConsoleRenderer_cmake Renderer_cmake)
 
+add_executable(RendererTests_cmake RendererTests/CameraTest.cpp)
+target_include_directories(RendererTests_cmake PUBLIC Renderer/include gtest/include)
+target_link_libraries(RendererTests_cmake Renderer_cmake gtestd gtest_maind)
+
 file(GLOB FILES_TO_COPY ${PROJECT_SOURCE_DIR}/copy_to_build_dir/*)
 file(COPY ${FILES_TO_COPY} DESTINATION ${PROJECT_BINARY_DIR}/)

@@ -1,5 +1,4 @@
 #include "include/Renderer.h"
-
 using namespace Eigen;
 
 void renderer::Renderer::DrawIndexed() {
@@ -26,6 +25,7 @@ void renderer::Renderer::TransformVertices() {
         auto camera_space_coords = eye_ * (object_ * (*vertices_)[i].homogeneous());
         if (material_->RequireNormals() || material_->RequireTexcoords()) {
             inverse_camera_space_z_[i] = 1 / camera_space_coords.z();
+            assert((*texcoords_)[i].x() >= 0 && (*texcoords_)[i].y() >= 0);
         }
         screen_space_vertices_[i] = (viewport_matrix_ * (projection_ * camera_space_coords)).hnormalized();
     }
@@ -128,23 +128,23 @@ void renderer::Renderer::DrawAllAfterTransformation() {
 // Coordinates should already be homogenous.
 bool renderer::Renderer::CullFace(const Vector3f& a, const Vector3f& b, const Vector3f& c) {
     Vector3f d1 = b - a, d2 = c - a;
-    return d1.x() * d2.y() - d2.x() * d1.y() >= 0;
+    return d1.x() * d2.y() - d2.x() * d1.y() <= 0;
 }
 
 void renderer::Renderer::DrawPixel(const Vector2i& window_space_vertex, float depth, const Vector3f& normal,
                                    const Vector2f& texcoord) {
     if (DepthTest(window_space_vertex, depth)) {
         Vector4f color = material_->DrawPixel(window_space_vertex, normal, texcoord);
-        (*depth_buffer_)(window_space_vertex.x() , render_target_->y() - 1 - window_space_vertex.y()) = depth;
+        (*depth_buffer_)(window_space_vertex.x() , window_space_vertex.y()) = depth;
         for (int i = 0; i < 4; ++i) {
-            (*render_target_)(window_space_vertex.x(), render_target_->y() - 1 - window_space_vertex.y()).val[i] =
+            (*render_target_)(window_space_vertex.x(), window_space_vertex.y()).val[i] =
                 static_cast<char>(MathHelpers::Clamp(color[i]) * 255);
         }
     }
 }
 
 bool renderer::Renderer::DepthTest(const Vector2i& a, float depth) {
-    return depth >= -1.f && depth <= 1.f && depth < (*depth_buffer_)(a.x(), render_target_->y() - 1 -a.y());
+    return depth >= -1.f && depth <= 1.f && depth < (*depth_buffer_)(a.x(), a.y());
 }
 void renderer::Renderer::Clear(renderer::ColorRGBA32 color) {
     int sz = render_target_->x() * render_target_->y();

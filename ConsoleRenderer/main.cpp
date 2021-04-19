@@ -10,7 +10,7 @@
 #include <Transform.h>
 #include <UnlitSolidColor.h>
 #include <windows.h>
-
+#include <fstream>
 #include <sstream>
 
 using namespace renderer;
@@ -25,21 +25,22 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrev, LPSTR szCmdLine, int sw) {
     KernelInitializer initializer(make_unique<SDLView>(main_window_));
 
     auto mainCamera = Camera::New("Main camera");
-    mainCamera->SetTransform({Vector3f(0, 0.1, -12), Quaternionf::Identity(), Vector3f(1, 1, 1)});
+    mainCamera->SetTransform({Vector3f(0, 0, -6), Quaternionf::Identity(), Vector3f(1, 1, 1)});
     mainCamera->SetAspectRatio(4.0 / 3);
     mainCamera->SetFovAngle(60.f / 180 * AI_MATH_PI_F);
     mainCamera->SetNearClipPlane(0.1);
     mainCamera->SetFarClipPlane(100);
 
-    auto dickMesh = AssimpBindings::LoadMeshFromFile("mesh.fbx", false);
-    auto color = Eigen::Vector4f(1.f, 1.f, 1.f, 1.f);
-    auto normalsMat = make_shared<const DrawNormals>();
-    auto dick = Object::New("Dildo", dickMesh, MaterialVec({normalsMat}));
-    dick->TransformProxy().SetPosition(Vector3f(0, 0, 4));
-    dick->TransformProxy().SetRotation(static_cast<Quaternionf>(AngleAxisf(1.1f * AI_MATH_PI, Vector3f::UnitY())));
-   // dick->TransformProxy().SetScale(Vector3f::Ones() * 0.3);
-    KernelAccessor()->SetActive(true);  // Now Kernel will rerender on each object change
+    auto amogusMesh = AssimpBindings::LoadMeshFromFile("amogus.obj", false);
+    auto amogusMat = MaterialVec({make_shared<FixedLambert>()});
 
+    vector<Object *> amogus(5);
+    for (int i = 0; i < 3; ++i) {
+        amogus[i] = Object::New("Amogus " + to_string(i), amogusMesh, amogusMat);
+        amogus[i]->TransformProxy().SetPosition(Vector3f((i - 1) * 3, 0, 0));
+    }
+    KernelAccessor()->SetActive(true);  // Now Kernel will rerender on each object change
+    int currAmogus = 0;
     while (true) {
         SDL_Event event;
         while (SDL_PollEvent(&event)) {
@@ -48,23 +49,32 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrev, LPSTR szCmdLine, int sw) {
                 SDL_Quit();
                 return 0;
             }
-
             else if (event.type == SDL_KEYDOWN) {  // These is temprorary and should be moved to controllers
                 if (event.key.keysym.sym == SDLK_UP) {
-                    dick->TransformProxy().SetPosition(dick->GetTransform().position + Vector3f(0, 0, 1));
+                    amogus[currAmogus]->TransformProxy().SetPosition(amogus[currAmogus]->GetTransform().position + Vector3f(0, 0, 1));
                 } else if (event.key.keysym.sym == SDLK_DOWN) {
-                    dick->TransformProxy().SetPosition(dick->GetTransform().position - Vector3f(0, 0, 1));
+                    amogus[currAmogus]->TransformProxy().SetPosition(amogus[currAmogus]->GetTransform().position - Vector3f(0, 0, 1));
                 } else if (event.key.keysym.sym == SDLK_LEFT) {
-                    dick->TransformProxy().SetPosition(dick->GetTransform().position - Vector3f(1, 0, 0));
+                    amogus[currAmogus]->TransformProxy().SetPosition(amogus[currAmogus]->GetTransform().position - Vector3f(1, 0, 0));
                 } else if (event.key.keysym.sym == SDLK_RIGHT) {
-                    dick->TransformProxy().SetPosition(dick->GetTransform().position + Vector3f(1, 0, 0));
+                    amogus[currAmogus]->TransformProxy().SetPosition(amogus[currAmogus]->GetTransform().position + Vector3f(1, 0, 0));
                 } else if (event.key.keysym.sym == SDLK_r) {
-                    dick->TransformProxy().SetRotation(dick->GetTransform().rotation *
+                    amogus[currAmogus]->TransformProxy().SetRotation(amogus[currAmogus]->GetTransform().rotation *
                                                        AngleAxisf(AI_MATH_PI_F * 0.2, Vector3f::UnitY()));
                 } else if (event.key.keysym.sym == SDLK_l) {
-                    dick->TransformProxy().SetRotation(dick->GetTransform().rotation *
+                    amogus[currAmogus]->TransformProxy().SetRotation(amogus[currAmogus]->GetTransform().rotation *
                                                        AngleAxisf(AI_MATH_PI_F * -0.2, Vector3f::UnitY()));
-                    }
+                } else if (event.key.keysym.sym <= SDLK_3 && event.key.keysym.sym >= SDLK_1) {
+                    currAmogus = event.key.keysym.sym - SDLK_1;
+                } else if (event.key.keysym.sym == SDLK_w) {
+                    mainCamera->TransformProxy().SetPosition(mainCamera->GetTransform().position + Vector3f(0, 0, 1));
+                } else if (event.key.keysym.sym == SDLK_s) {
+                    mainCamera->TransformProxy().SetPosition(mainCamera->GetTransform().position - Vector3f(0, 0, 1));
+                } else if (event.key.keysym.sym == SDLK_a) {
+                    mainCamera->TransformProxy().SetPosition(mainCamera->GetTransform().position - Vector3f(1, 0, 0));
+                } else if (event.key.keysym.sym == SDLK_d) {
+                    mainCamera->TransformProxy().SetPosition(mainCamera->GetTransform().position + Vector3f(1, 0, 0));
+                }
             }
         }
     }

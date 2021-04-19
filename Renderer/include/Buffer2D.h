@@ -4,7 +4,9 @@
 
 namespace renderer {
 using namespace std;
-
+/// class for 2d array which is stored as flat in memory.
+/// The x axis if first and is directed rightwards while y is directed upwards.
+/// The first coordinate of access operators is x and the the lowest row has y coordinate = 0.
 template <typename T>
 class Buffer2D {
    public:
@@ -25,13 +27,13 @@ class Buffer2D {
         }
         y_ = nested[0].size();
         flat_.resize(x_ * y_);
-        for (int i = 0; i < y_; ++i) {
+        for (int i = y_ - 1; i >= 0; --i) {
             assert(nested[i].size() == x_ && "sizes of slices don't match");
             copy(nested[i].begin(), nested[i].end(), flat_.begin() + i * x_);
         }
     }
-    T &operator()(size_t x, size_t y) { return flat_[y * x_ + x]; }
-    const T &operator()(size_t x, size_t y) const { return flat_[y * x_ + x]; }
+    T &operator()(size_t x, size_t y) { return flat_[(y_ - 1 - y) * x_ + x]; }
+    const T &operator()(size_t x, size_t y) const { return flat_[(y_ - 1 - y) * x_ + x]; }
     const T *data() const noexcept { return flat_.data(); }
     T *data() noexcept { return flat_.data(); }
     [[nodiscard]] inline size_t x() const { return x_; }
