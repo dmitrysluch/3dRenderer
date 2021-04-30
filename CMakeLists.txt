@@ -3,7 +3,7 @@ project(Renderer_cmake)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS 1)
 if (MSVC)
-    add_compile_options(/openmp /DEIGEN_DONT_PARALLELIZE)
+    add_compile_options(/openmp /DEIGEN_DONT_PARALLELIZE) # Causes races. IDGAD
 endif()
 add_library(Renderer_cmake
         Renderer/include/AssimpBindings.h

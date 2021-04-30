@@ -96,7 +96,7 @@ void renderer::Renderer::DrawTriangle(int ind_a, int ind_b, int ind_c) {
         VertexAttrs from =
             VertexAttrs::Interpolate(a, b, ty, material_->RequireNormals(), material_->RequireTexcoords());
         VertexAttrs to = VertexAttrs::Interpolate(a, d, ty, material_->RequireNormals(), material_->RequireTexcoords());
-        for (int j = max<int>(from.vertex_.x(), 0); j <= to.vertex_.x() && j < render_target_->x(); ++j) {
+        for (int j = max<int>(ceil(from.vertex_.x()), 0); j <= to.vertex_.x() && j < render_target_->x(); ++j) {
             const float tx = (j - from.vertex_.x()) / (to.vertex_.x() - from.vertex_.x());
             VertexAttrs attrs =
                 VertexAttrs::Interpolate(from, to, tx, material_->RequireNormals(), material_->RequireTexcoords());

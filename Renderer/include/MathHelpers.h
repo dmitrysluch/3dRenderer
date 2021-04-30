@@ -10,7 +10,6 @@ public:
     template <typename T>
     static T PerspInterpolate(const T &from, float from_inv_z, const T &to, float to_inv_z, float inv_z, float t) {
         T corr = Lerp(static_cast<T>(from * from_inv_z), static_cast<T>(to * to_inv_z), t) / inv_z;
-        T inc = Lerp(from, to, t);
         return corr;
     }
     static float Clamp(float val) {
