@@ -34,9 +34,9 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrev, LPSTR szCmdLine, int sw) {
     main_camera->SetNearClipPlane(1);
     main_camera->SetFarClipPlane(100);
 
-    Buffer2D<ColorRGBA32> amogus_texture(2048, 2048);
+    Buffer2D<ColorRGBA32> amogus_texture(512, 512);
     ifstream fin("texture.rgba32");
-    fin.read((char *)amogus_texture.data(), 2048 * 2048 * 4);
+    fin.read((char *)amogus_texture.data(), 512 * 512 * 4);
     fin.close();
 
     auto amogus_mesh = AssimpBindings::LoadMeshFromFile("amogus.obj", false);
@@ -45,7 +45,8 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrev, LPSTR szCmdLine, int sw) {
     vector<Object *> amogus(5);
     for (int i = 0; i < 3; ++i) {
         amogus[i] = Object::New("Amogus " + to_string(i), amogus_mesh, amogus_mat);
-        amogus[i]->TransformProxy().SetPosition(Vector3f(0, 0, -3));
+        amogus[i]->TransformProxy().SetPosition(Vector3f(i - 1.0, 0, -3));
+        amogus[i]->TransformProxy().SetRotation((Quaternionf)AngleAxisf(AI_MATH_PI_F, Vector3f::UnitY()));
     }
     KernelAccessor()->SetActive(true);  // Now Kernel will rerender on each object change
     int curr_amogus = 0;
