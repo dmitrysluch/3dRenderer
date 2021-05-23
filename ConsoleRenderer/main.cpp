@@ -39,7 +39,7 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrev, LPSTR szCmdLine, int sw) {
     fin.read((char *)amogus_texture.data(), 512 * 512 * 4);
     fin.close();
 
-    auto amogus_mesh = AssimpBindings::LoadMeshFromFile("amogus.obj", false);
+    auto amogus_mesh = AssimpBindings::LoadMeshFromFile("cube.obj", false);
     auto amogus_mat = MaterialVec({make_shared<TexturedUnlitMaterial>(std::move(amogus_texture))});
 
     vector<Object *> amogus(5);
@@ -60,13 +60,13 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrev, LPSTR szCmdLine, int sw) {
             }
             else if (event.type == SDL_KEYDOWN) {  // These is temprorary and should be moved to controllers
                 if (event.key.keysym.sym == SDLK_UP) {
-                    amogus[curr_amogus]->TransformProxy().SetPosition(amogus[curr_amogus]->GetTransform().position + Vector3f(0, 0, 1));
+                    amogus[curr_amogus]->TransformProxy().SetPosition(amogus[curr_amogus]->GetTransform().position + Vector3f(0, 0, 0.1));
                 } else if (event.key.keysym.sym == SDLK_DOWN) {
-                    amogus[curr_amogus]->TransformProxy().SetPosition(amogus[curr_amogus]->GetTransform().position - Vector3f(0, 0, 1));
+                    amogus[curr_amogus]->TransformProxy().SetPosition(amogus[curr_amogus]->GetTransform().position - Vector3f(0, 0, 0.1));
                 } else if (event.key.keysym.sym == SDLK_LEFT) {
-                    amogus[curr_amogus]->TransformProxy().SetPosition(amogus[curr_amogus]->GetTransform().position - Vector3f(1, 0, 0));
+                    amogus[curr_amogus]->TransformProxy().SetPosition(amogus[curr_amogus]->GetTransform().position - Vector3f(0.1, 0, 0));
                 } else if (event.key.keysym.sym == SDLK_RIGHT) {
-                    amogus[curr_amogus]->TransformProxy().SetPosition(amogus[curr_amogus]->GetTransform().position + Vector3f(1, 0, 0));
+                    amogus[curr_amogus]->TransformProxy().SetPosition(amogus[curr_amogus]->GetTransform().position + Vector3f(0.1, 0, 0));
                 } else if (event.key.keysym.sym == SDLK_r) {
                     amogus[curr_amogus]->TransformProxy().SetRotation(amogus[curr_amogus]->GetTransform().rotation *
                                                        AngleAxisf(AI_MATH_PI_F * 0.2, Vector3f::UnitY()));
@@ -83,6 +83,10 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrev, LPSTR szCmdLine, int sw) {
                     main_camera->TransformProxy().SetPosition(main_camera->GetTransform().position - Vector3f(1, 0, 0));
                 } else if (event.key.keysym.sym == SDLK_d) {
                     main_camera->TransformProxy().SetPosition(main_camera->GetTransform().position + Vector3f(1, 0, 0));
+                } else if (event.key.keysym.sym == SDLK_j) {
+                    main_camera->TransformProxy().SetPosition(main_camera->GetTransform().position - Vector3f(0, 0.3, 0));
+                } else if (event.key.keysym.sym == SDLK_k) {
+                    main_camera->TransformProxy().SetPosition(main_camera->GetTransform().position + Vector3f(0, 0.3, 0));
                 }
             }
         }

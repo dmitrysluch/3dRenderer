@@ -25,12 +25,10 @@ class Renderer {
     void SetNormals(const vector<Vector3f> *normals) {
         normals_ = normals;
         transformed_normals_.resize(normals_->size());
-        inverse_camera_space_z_.resize(normals_->size());
     }
     [[nodiscard]] const vector<Vector2f> *GetTexcoords() const { return texcoords_; }
     void SetTexcoords(const vector<Vector2f> *texcoords) {
         texcoords_ = texcoords;
-        inverse_camera_space_z_.resize(texcoords_->size());
     }
     [[nodiscard]] const vector<int> *GetIndices() const { return indices_; }
     void SetIndices(const vector<int> *indices) { indices_ = indices; }
@@ -47,6 +45,8 @@ class Renderer {
         eye_ = eye;
         projection_ = projection;
     }
+    [[nodiscard]] float GetNearPlane() const { return near_plane_; }
+    void SetNearPlane(float near_plane) { near_plane_ = near_plane; }
     void DrawIndexed();
     // Fills render target with specified color and depth with maximum depth
     void Clear(ColorRGBA32 color);
@@ -56,12 +56,14 @@ class Renderer {
         Vector3f normal_;
         Vector2f texcoord_;
         float inv_z_;
+        VertexAttrs() = default;
         VertexAttrs(const Vector3f &vertex) : vertex_(vertex) {}
         static VertexAttrs Interpolate(const VertexAttrs& a, const VertexAttrs& b, float t, bool interpolate_normals,
                                        bool interpolate_texcoords);
     };
 
     Matrix4f object_, eye_, projection_, viewport_matrix_;
+    float near_plane_;
 
     const BasicMaterial *material_ = nullptr;
 
@@ -70,19 +72,23 @@ class Renderer {
     const vector<Vector2f> *texcoords_ = nullptr;
     const vector<int> *indices_ = nullptr;
     
-    vector<Vector3f> screen_space_vertices_;
+    vector<Vector4f> screen_space_vertices_;
     vector<Vector3f> transformed_normals_;
-    vector<float> inverse_camera_space_z_;
 
     Buffer2D<float> *depth_buffer_=nullptr;
     Buffer2D<ColorRGBA32> *render_target_=nullptr;
 
     void TransformVertices();
     void DrawAllAfterTransformation();
+    /// Clips triangle on indices a, b, c
+    /// @param [in] a, b, c - indices of triangle vertices
+    /// @param [out] attrs - array of at least 6 elements, vertices and attributes of resulting triangle (or tw triangles)
+    /// @returns Returns number of vertices in resulting polygon
+    inline int ClipTriangle (int a, int b, int c, VertexAttrs *attrs) const;
     inline void DrawTriangle(int a, int b, int c);
-    /// <summary>Transforms vertex attributes is they are used by material then draws pixel using material</summary>
+    inline void DrawTriangleClipped(VertexAttrs &a, VertexAttrs &b, VertexAttrs &c);
     inline void DrawPixel(const Vector2i &view_port_vertex, float depth, const Vector3f &normal, const Vector2f &texcoord);
-    static bool CullFace(const Vector3f &a, const Vector3f &b, const Vector3f &c);
+    static inline bool CullFace(const Vector3f &a, const Vector3f &b, const Vector3f &c);
     inline bool DepthTest(const Vector2i &a, float depth);
 };
 }  // namespace renderer

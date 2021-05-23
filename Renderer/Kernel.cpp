@@ -30,6 +30,7 @@ void renderer::Kernel::Render() {
     assert(active_camera_id_ >= 0 && active_camera_id_ < cameras_.size() && "Invalid active camera");
     renderer_.Clear({240, 250, 255, 100}); // TODO: pass color as param
     renderer_.SetEyeAndProjectionMatrices(cameras_[active_camera_id_]->GetTransform().GetTransformMatrix().inverse().matrix(), cameras_[active_camera_id_]->GetProjectionMatrix());
+    renderer_.SetNearPlane(cameras_[active_camera_id_]->GetNearClipPlane());
     for (const auto& object : objects_) {
         renderer_.SetObjectTransform(object->GetTransform().GetTransformMatrix());
         auto mesh = object->GetMesh();
