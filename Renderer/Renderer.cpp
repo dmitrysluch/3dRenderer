@@ -15,7 +15,6 @@ void renderer::Renderer::DrawIndexed() {
            "Texcoords not set or doesn't match vertices size");
     TransformVertices();
     DrawAllAfterTransformation();
-    printf("\n");
 }
 
 void renderer::Renderer::TransformVertices() {
@@ -93,7 +92,7 @@ int renderer::Renderer::ClipTriangle(int a, int b, int c, VertexAttrs* attrs) co
     if (screen_space_vertices_[b].w() < near_plane_) { // a and v are before near plane, clip them
         const float ta = (near_plane_ - screen_space_vertices_[c].w()) / (screen_space_vertices_[a].w() - screen_space_vertices_[c].w());
         attrs[0].vertex_ = MathHelpers::Lerp<Vector4f>(screen_space_vertices_[c], screen_space_vertices_[a], ta).hnormalized();
-        const float tb = (near_plane_ - screen_space_vertices_[c].w()) / (screen_space_vertices_[a].w() - screen_space_vertices_[c].w());
+        const float tb = (near_plane_ - screen_space_vertices_[c].w()) / (screen_space_vertices_[b].w() - screen_space_vertices_[c].w());
         attrs[1].vertex_ = MathHelpers::Lerp<Vector4f>(screen_space_vertices_[c], screen_space_vertices_[b], tb).hnormalized();
         if (material_->RequireNormals() || material_->RequireTexcoords()) {
             attrs[0].inv_z_ = 1.f / near_plane_;
@@ -108,13 +107,6 @@ int renderer::Renderer::ClipTriangle(int a, int b, int c, VertexAttrs* attrs) co
                 attrs[1].texcoord_ = MathHelpers::Lerp((*texcoords_)[c], (*texcoords_)[b], tb);
             }
         }
-        printf("CLIP 2: A(%.3f, %.3f, %.3f) B(%.3f, %.3f, %.3f) C(%.3f, %.3f, %.3f) a(%.3f, %.3f, %.3f) b(%.3f, %.3f, %.3f)\n",
-               screen_space_vertices_[a].hnormalized().x(), screen_space_vertices_[a].hnormalized().y(), screen_space_vertices_[a].hnormalized().z(),
-               screen_space_vertices_[b].hnormalized().x(), screen_space_vertices_[b].hnormalized().y(), screen_space_vertices_[b].hnormalized().z(),
-               screen_space_vertices_[c].hnormalized().x(), screen_space_vertices_[c].hnormalized().y(), screen_space_vertices_[c].hnormalized().z(),
-               attrs[0].vertex_.x(), attrs[0].vertex_.y(), attrs[0].vertex_.z(),
-               attrs[1].vertex_.x(), attrs[1].vertex_.y(), attrs[1].vertex_.z());
-        fflush(stdout);
         if (swapped) {
             swap(attrs[1], attrs[2]);
         }
@@ -144,13 +136,6 @@ int renderer::Renderer::ClipTriangle(int a, int b, int c, VertexAttrs* attrs) co
         }
         attrs[4] = attrs[1];
         attrs[5] = attrs[0];
-        printf("CLIP 1: A(%.3f, %.3f, %.3f) B(%.3f, %.3f, %.3f) C(%.3f, %.3f, %.3f) c(%.3f, %.3f, %.3f) b(%.3f, %.3f, %.3f)\n",
-               screen_space_vertices_[a].hnormalized().x(), screen_space_vertices_[a].hnormalized().y(), screen_space_vertices_[a].hnormalized().z(),
-               screen_space_vertices_[b].hnormalized().x(), screen_space_vertices_[b].hnormalized().y(), screen_space_vertices_[b].hnormalized().z(),
-               screen_space_vertices_[c].hnormalized().x(), screen_space_vertices_[c].hnormalized().y(), screen_space_vertices_[c].hnormalized().z(),
-               attrs[0].vertex_.x(), attrs[0].vertex_.y(), attrs[0].vertex_.z(),
-               attrs[3].vertex_.x(), attrs[3].vertex_.y(), attrs[3].vertex_.z());
-        fflush(stdout);
         if (swapped) {
             swap(attrs[1], attrs[2]);
             swap(attrs[4], attrs[5]);

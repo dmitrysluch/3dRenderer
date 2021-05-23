@@ -31,7 +31,7 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrev, LPSTR szCmdLine, int sw) {
     SDL_GetWindowSize(main_window, &x, &y);
     main_camera->SetAspectRatio(static_cast<float>(x) / y);
     main_camera->SetFovAngle(60.f / 180 * AI_MATH_PI_F);
-    main_camera->SetNearClipPlane(1);
+    main_camera->SetNearClipPlane(0.01);
     main_camera->SetFarClipPlane(100);
 
     Buffer2D<ColorRGBA32> amogus_texture(512, 512);
@@ -39,7 +39,7 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrev, LPSTR szCmdLine, int sw) {
     fin.read((char *)amogus_texture.data(), 512 * 512 * 4);
     fin.close();
 
-    auto amogus_mesh = AssimpBindings::LoadMeshFromFile("cube.obj", false);
+    auto amogus_mesh = AssimpBindings::LoadMeshFromFile("amogus.obj", false);
     auto amogus_mat = MaterialVec({make_shared<TexturedUnlitMaterial>(std::move(amogus_texture))});
 
     vector<Object *> amogus(5);
