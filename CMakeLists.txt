@@ -33,7 +33,7 @@ add_library(Renderer_cmake SHARED
         Renderer/include/Kernel.h
         Renderer/Kernel.cpp
         Renderer/IView.cpp
-        Renderer/include/IView.h Renderer/include/Transform.h Renderer/Transform.cpp Renderer/SDLView.cpp Renderer/include/SDLView.h Renderer/KeyboardObserver.cpp Renderer/include/KeyboardObserver.h)
+        Renderer/include/IView.h Renderer/include/Transform.h Renderer/Transform.cpp Renderer/SDLView.cpp Renderer/include/SDLView.h)
 include_directories(include)
 # compile assimp and copy assimp.lib and assimp.dll (assimp.so and assimp.so.a) to the same folder that executable or just install assimp globally
 target_link_libraries(Renderer_cmake assimp SDL2)
