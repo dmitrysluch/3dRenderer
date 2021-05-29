@@ -23,9 +23,8 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrev, LPSTR szCmdLine, int sw) {
     SDL_Window *main_window = SDL_CreateWindow("Renderer from scratch", SDL_WINDOWPOS_UNDEFINED,
                                                 SDL_WINDOWPOS_UNDEFINED, 1600, 900, SDL_WINDOW_RESIZABLE);
 
-    KernelInitializer initializer(make_unique<SDLView>(main_window));
-
-    auto main_camera = Camera::New("Main camera");
+    Kernel kernel(std::make_unique<SDLView>(main_window));
+    auto main_camera = kernel.Instantiate<Camera>("Main camera");
     main_camera->SetTransform({Vector3f(0, 1, -6), Quaternionf::Identity(), Vector3f(1, 1, 1)});
     int x, y;
     SDL_GetWindowSize(main_window, &x, &y);
@@ -44,11 +43,11 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrev, LPSTR szCmdLine, int sw) {
 
     vector<Object *> amogus(5);
     for (int i = 0; i < 3; ++i) {
-        amogus[i] = Object::New("Amogus " + to_string(i), amogus_mesh, amogus_mat);
+        amogus[i] = kernel.Instantiate<Object>("Amogus " + to_string(i), amogus_mesh, amogus_mat);
         amogus[i]->TransformProxy().SetPosition(Vector3f(i - 1.0, 0, -3));
         amogus[i]->TransformProxy().SetRotation((Quaternionf)AngleAxisf(AI_MATH_PI_F, Vector3f::UnitY()));
     }
-    KernelAccessor()->SetActive(true);  // Now Kernel will rerender on each object change
+    kernel.SetActive(true);  // Now Kernel will rerender on each object change
     int curr_amogus = 0;
     while (true) {
         SDL_Event event;

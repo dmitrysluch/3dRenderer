@@ -1,6 +1,4 @@
 #pragma once
-#include <Library/Singleton/AnyGlobalAccess.h>
-
 #include <memory>
 
 #include "Camera.h"
@@ -9,7 +7,6 @@
 #include "Renderer.h"
 
 namespace renderer {
-class KernelID;
 class Kernel {
    public:
     explicit Kernel(unique_ptr<IView> view);
@@ -19,6 +16,10 @@ class Kernel {
     [[nodiscard]] const Object &GetObject(const string &name) const;
     [[nodiscard]] bool IsActive() const { return active_; }
     void SetActive(bool active);
+    template <typename T, typename ...TArgs>
+    T * Instantiate(TArgs&& ... args) {
+        return T::InstantiateWithKernel(this, std::forward<TArgs>(args)...);
+    }
    private:
     // Objects, Lights and Camera call OnUpdate to cause rerender
     void OnUpdate();
@@ -35,14 +36,7 @@ class Kernel {
     unique_ptr<IView> view_;
     Renderer renderer_;
 
-    friend Object;
-    friend Camera;
+    friend class Object;
+    friend class Camera;
 };
-class KernelAccessible : public NSLibrary::CAnyGlobalAccessible<Kernel, KernelID> {};
-class KernelInitializer : public NSLibrary::CAnyGlobalInitializer<Kernel, KernelID> {
-    using CBase = NSLibrary::CAnyGlobalInitializer<Kernel, KernelID>;
-   public:
-    using CBase::CBase;
-};
-class KernelAccessor : public NSLibrary::CAnyGlobalAccess<Kernel, KernelID> {};
 }  // namespace renderer

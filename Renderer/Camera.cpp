@@ -9,21 +9,20 @@ using namespace std;
 const SceneTransform& Camera::GetTransform() const { return transform_; }
 void Camera::SetTransform(const SceneTransform& transform) {
     transform_ = transform;
-    KernelAccessor()->OnUpdate();
+    kernel_->OnUpdate();
 }
 SceneTransformProxy Camera::TransformProxy() {
-    return SceneTransformProxy(&transform_, [](){ KernelAccessor()->OnUpdate(); });
+    return SceneTransformProxy(&transform_, [this](){ kernel_->OnUpdate(); });
 }
-Camera::Camera(std::string name) : name_(std::move(name)) {
+Camera::Camera(Kernel *kernel, std::string name) : kernel_(kernel), name_(std::move(name)) {
     assert(name_.find_first_not_of(" \t\n\r") != std::string::npos && "Name must have not whitespace characters");
 }
-Camera* Camera::New(string name) {
-    auto cam = new Camera(std::move(name));
-    KernelAccessor accessor;
-    accessor->cameras_.push_back(unique_ptr<Camera>(cam));
-    if (accessor->cameras_.size() == 1) {
-        accessor->active_camera_id_ = 0;
+Camera* Camera::InstantiateWithKernel(Kernel *kernel, string name) {
+    auto cam = new Camera(kernel, std::move(name));
+    kernel->cameras_.push_back(unique_ptr<Camera>(cam));
+    if (kernel->cameras_.size() == 1) {
+        kernel->active_camera_id_ = 0;
     }
-    accessor->OnUpdate();
+    kernel->OnUpdate();
     return cam;
 }

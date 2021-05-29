@@ -6,10 +6,10 @@
 #include "Transform.h"
 
 namespace renderer {
+class Kernel;
 class Camera {
    public:
     Camera() = delete;
-    static Camera *New(std::string name);
     [[nodiscard]] float GetFovAngle() const { return fov_angle_; }
     void SetFovAngle(float fov_angle) { fov_angle_ = fov_angle; }
     [[nodiscard]] float GetFovAngleDeg() const { return fov_angle_ / static_cast<float>(EIGEN_PI) * 180.f; }
@@ -30,10 +30,14 @@ class Camera {
     [[nodiscard]] const std::string &GetName() const { return name_; }
 
    private:
-    Camera(std::string name);
+    Camera(Kernel *kernel, std::string name);
+    static Camera *InstantiateWithKernel(Kernel *kernel, std::string name);
 
+    Kernel *kernel_;
     std::string name_;
     SceneTransform transform_;
     float fov_angle_ = 30, aspect_ratio_ = 16.f / 9, far_clip_plane_ = 100, near_clip_plane_ = 10;
+
+    friend class Kernel;
 };
 }  // namespace renderer
