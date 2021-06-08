@@ -19,10 +19,12 @@ void renderer::Renderer::DrawIndexed() {
 
 void renderer::Renderer::TransformVertices() {
 #ifdef _OPENMP
-    #pragma omp parallel for num_threads(8)
+#pragma omp parallel for num_threads(8)
 #endif
     for (int i = 0; i < vertices_->size(); ++i) {
-        auto camera_space_coords = eye_ * (object_ * (*vertices_)[i].homogeneous());
+        auto world_space_vertex = (object_ * (*vertices_)[i].homogeneous());
+        world_space_vertices_[i] = Vector3f(world_space_vertex.x(), world_space_vertex.y(), world_space_vertex.z());
+        auto camera_space_coords = eye_ * world_space_vertex;
         screen_space_vertices_[i] = (viewport_matrix_ * (projection_ * camera_space_coords));
     }
     if (material_->RequireNormals()) {
@@ -30,14 +32,15 @@ void renderer::Renderer::TransformVertices() {
 #pragma omp parallel for num_threads(8)
 #endif
         for (int i = 0; i < normals_->size(); ++i) {
-            transformed_normals_[i] = object_.topLeftCorner(3, 3).transpose().inverse() * (*normals_)[i];
+            transformed_normals_[i] = (object_.topLeftCorner(3, 3).transpose().inverse() * (*normals_)[i]).normalized();
         }
     }
 }
 
 renderer::Renderer::VertexAttrs renderer::Renderer::VertexAttrs::Interpolate(const VertexAttrs& a, const VertexAttrs& b,
                                                                              float t, bool interpolate_normals,
-                                                                             bool interpolate_texcoords) {
+                                                                             bool interpolate_texcoords,
+                                                                             bool interpolate_world_pos) {
     VertexAttrs res(MathHelpers::Lerp(a.vertex_, b.vertex_, t));
     if (interpolate_normals || interpolate_texcoords) {
         res.inv_z_ = MathHelpers::Lerp(a.inv_z_, b.inv_z_, t);
@@ -48,13 +51,11 @@ renderer::Renderer::VertexAttrs renderer::Renderer::VertexAttrs::Interpolate(con
     if (interpolate_texcoords) {
         res.texcoord_ = MathHelpers::PerspInterpolate(a.texcoord_, a.inv_z_, b.texcoord_, b.inv_z_, res.inv_z_, t);
     }
+    if (interpolate_world_pos) {
+        res.world_pos_ = MathHelpers::PerspInterpolate(a.world_pos_, a.inv_z_, b.world_pos_, b.inv_z_, res.inv_z_, t);
+    }
     return res;
 }
-
-Vector3f v4f2v3f(const Vector4f &vec) {
-    return Vector3f(vec.x(), vec.y(), vec.z());
-}
-
 void renderer::Renderer::DrawTriangle(int a, int b, int c) {
     VertexAttrs attrs[6];
     int sz = ClipTriangle(a, b, c, attrs);
@@ -63,7 +64,8 @@ void renderer::Renderer::DrawTriangle(int a, int b, int c) {
     }
 }
 int renderer::Renderer::ClipTriangle(int a, int b, int c, VertexAttrs* attrs) const {
-    if (screen_space_vertices_[a].w() < near_plane_ && screen_space_vertices_[b].w() < near_plane_ && screen_space_vertices_[c].w() < near_plane_) {
+    if (screen_space_vertices_[a].w() < near_plane_ && screen_space_vertices_[b].w() < near_plane_ &&
+        screen_space_vertices_[c].w() < near_plane_) {
         return 0;
     }
     bool swapped = false;
@@ -89,16 +91,24 @@ int renderer::Renderer::ClipTriangle(int a, int b, int c, VertexAttrs* attrs) co
             attrs[2].texcoord_ = (*texcoords_)[c];
         }
     }
-    if (screen_space_vertices_[b].w() < near_plane_) { // a and v are before near plane, clip them
-        const float ta = (near_plane_ - screen_space_vertices_[c].w()) / (screen_space_vertices_[a].w() - screen_space_vertices_[c].w());
-        attrs[0].vertex_ = MathHelpers::Lerp<Vector4f>(screen_space_vertices_[c], screen_space_vertices_[a], ta).hnormalized();
-        const float tb = (near_plane_ - screen_space_vertices_[c].w()) / (screen_space_vertices_[b].w() - screen_space_vertices_[c].w());
-        attrs[1].vertex_ = MathHelpers::Lerp<Vector4f>(screen_space_vertices_[c], screen_space_vertices_[b], tb).hnormalized();
+    if (material_->RequireWorldPos()) {
+        attrs[2].world_pos_ = world_space_vertices_[c];
+    }
+    if (screen_space_vertices_[b].w() < near_plane_) {  // a and v are before near plane, clip them
+        const float ta = (near_plane_ - screen_space_vertices_[c].w()) /
+                         (screen_space_vertices_[a].w() - screen_space_vertices_[c].w());
+        attrs[0].vertex_ =
+            MathHelpers::Lerp<Vector4f>(screen_space_vertices_[c], screen_space_vertices_[a], ta).hnormalized();
+        const float tb = (near_plane_ - screen_space_vertices_[c].w()) /
+                         (screen_space_vertices_[b].w() - screen_space_vertices_[c].w());
+        attrs[1].vertex_ =
+            MathHelpers::Lerp<Vector4f>(screen_space_vertices_[c], screen_space_vertices_[b], tb).hnormalized();
         if (material_->RequireNormals() || material_->RequireTexcoords()) {
             attrs[0].inv_z_ = 1.f / near_plane_;
             attrs[1].inv_z_ = 1.f / near_plane_;
             if (material_->RequireNormals()) {
-                // Not perspective correct interpolation because t is computed in Camera space (w in HOS is z in Camera S)
+                // Not perspective correct interpolation because t is computed in Camera space (w in HOS is z in Camera
+                // S)
                 attrs[0].normal_ = MathHelpers::Lerp(transformed_normals_[c], transformed_normals_[a], ta);
                 attrs[1].normal_ = MathHelpers::Lerp(transformed_normals_[c], transformed_normals_[b], tb);
             }
@@ -107,23 +117,30 @@ int renderer::Renderer::ClipTriangle(int a, int b, int c, VertexAttrs* attrs) co
                 attrs[1].texcoord_ = MathHelpers::Lerp((*texcoords_)[c], (*texcoords_)[b], tb);
             }
         }
+        if (material_->RequireWorldPos()) {
+            attrs[0].world_pos_ = MathHelpers::Lerp(world_space_vertices_[c], world_space_vertices_[a], ta);
+            attrs[1].world_pos_ = MathHelpers::Lerp(world_space_vertices_[c], world_space_vertices_[b], tb);
+        }
         if (swapped) {
             swap(attrs[1], attrs[2]);
         }
         return 3;
     }
     if (screen_space_vertices_[a].w() < near_plane_) {
-        const float tc = (near_plane_ - screen_space_vertices_[c].w()) / (screen_space_vertices_[a].w() - screen_space_vertices_[c].w());
-        attrs[0].vertex_ = MathHelpers::Lerp(screen_space_vertices_[c], screen_space_vertices_[a], tc ).hnormalized();
+        const float tc = (near_plane_ - screen_space_vertices_[c].w()) /
+                         (screen_space_vertices_[a].w() - screen_space_vertices_[c].w());
+        attrs[0].vertex_ = MathHelpers::Lerp(screen_space_vertices_[c], screen_space_vertices_[a], tc).hnormalized();
         attrs[1].vertex_ = screen_space_vertices_[b].hnormalized();
-        const float tb = (near_plane_ - screen_space_vertices_[b].w()) / (screen_space_vertices_[a].w() - screen_space_vertices_[b].w());
+        const float tb = (near_plane_ - screen_space_vertices_[b].w()) /
+                         (screen_space_vertices_[a].w() - screen_space_vertices_[b].w());
         attrs[3].vertex_ = MathHelpers::Lerp(screen_space_vertices_[b], screen_space_vertices_[a], tb).hnormalized();
         if (material_->RequireNormals() || material_->RequireTexcoords()) {
             attrs[0].inv_z_ = 1.f / near_plane_;
             attrs[1].inv_z_ = 1.f / screen_space_vertices_[b].w();
             attrs[3].inv_z_ = 1.f / near_plane_;
             if (material_->RequireNormals()) {
-                // Not perspective correct interpolation because t is computed in Camera space (w in HOS is z in Camera S)
+                // Not perspective correct interpolation because t is computed in Camera space (w in HOS is z in Camera
+                // S)
                 attrs[0].normal_ = MathHelpers::Lerp(transformed_normals_[c], transformed_normals_[a], tc);
                 attrs[1].normal_ = transformed_normals_[b];
                 attrs[3].normal_ = MathHelpers::Lerp(transformed_normals_[b], transformed_normals_[a], tb);
@@ -133,6 +150,11 @@ int renderer::Renderer::ClipTriangle(int a, int b, int c, VertexAttrs* attrs) co
                 attrs[1].texcoord_ = (*texcoords_)[b];
                 attrs[3].texcoord_ = MathHelpers::Lerp((*texcoords_)[b], (*texcoords_)[a], tb);
             }
+        }
+        if (material_->RequireWorldPos()) {
+            attrs[0].world_pos_ = MathHelpers::Lerp(world_space_vertices_[c], world_space_vertices_[a], tc);
+            attrs[1].world_pos_ = world_space_vertices_[b];
+            attrs[3].world_pos_ = MathHelpers::Lerp(world_space_vertices_[b], world_space_vertices_[a], tb);
         }
         attrs[4] = attrs[1];
         attrs[5] = attrs[0];
@@ -156,12 +178,16 @@ int renderer::Renderer::ClipTriangle(int a, int b, int c, VertexAttrs* attrs) co
             attrs[1].texcoord_ = (*texcoords_)[b];
         }
     }
+    if (material_->RequireWorldPos()) {
+        attrs[0].world_pos_ = world_space_vertices_[a];
+        attrs[1].world_pos_ = world_space_vertices_[b];
+    }
     if (swapped) {
         swap(attrs[1], attrs[2]);
     }
     return 3;
 }
-void renderer::Renderer::DrawTriangleClipped(VertexAttrs &a, VertexAttrs &b, VertexAttrs &c) {
+void renderer::Renderer::DrawTriangleClipped(VertexAttrs& a, VertexAttrs& b, VertexAttrs& c) {
     if (!CullFace(a.vertex_, b.vertex_, c.vertex_)) {
         return;
     }
@@ -175,32 +201,35 @@ void renderer::Renderer::DrawTriangleClipped(VertexAttrs &a, VertexAttrs &b, Ver
         swap(b, c);
     }
     VertexAttrs d = VertexAttrs::Interpolate(a, c, (b.vertex_.y() - a.vertex_.y()) / (c.vertex_.y() - a.vertex_.y()),
-                                             material_->RequireNormals(), material_->RequireTexcoords());
+                                             material_->RequireNormals(), material_->RequireTexcoords(),
+                                             material_->RequireWorldPos());
     if (d.vertex_.x() < b.vertex_.x()) {
         swap(b, d);
     }
     for (int i = min<int>(a.vertex_.y(), render_target_->y() - 1); i >= b.vertex_.y() && i >= 0; --i) {
         const float ty = (i - a.vertex_.y()) / (b.vertex_.y() - a.vertex_.y());
-        VertexAttrs from =
-            VertexAttrs::Interpolate(a, b, ty, material_->RequireNormals(), material_->RequireTexcoords());
-        VertexAttrs to = VertexAttrs::Interpolate(a, d, ty, material_->RequireNormals(), material_->RequireTexcoords());
+        VertexAttrs from = VertexAttrs::Interpolate(a, b, ty, material_->RequireNormals(),
+                                                    material_->RequireTexcoords(), material_->RequireWorldPos());
+        VertexAttrs to = VertexAttrs::Interpolate(a, d, ty, material_->RequireNormals(), material_->RequireTexcoords(),
+                                                  material_->RequireWorldPos());
         for (int j = max<int>(ceil(from.vertex_.x()), 0); j <= to.vertex_.x() && j < render_target_->x(); ++j) {
             const float tx = (j - from.vertex_.x()) / (to.vertex_.x() - from.vertex_.x());
-            VertexAttrs attrs =
-                VertexAttrs::Interpolate(from, to, tx, material_->RequireNormals(), material_->RequireTexcoords());
-            DrawPixel(Vector2i(j, i), attrs.vertex_.z(), attrs.normal_, attrs.texcoord_);
+            VertexAttrs attrs = VertexAttrs::Interpolate(from, to, tx, material_->RequireNormals(),
+                                                         material_->RequireTexcoords(), material_->RequireWorldPos());
+            DrawPixel(Vector2i(j, i), attrs.vertex_.z(), attrs.normal_, attrs.texcoord_, attrs.world_pos_);
         }
     }
     for (int i = max<int>(ceil(c.vertex_.y()), 0); i <= b.vertex_.y() && i < render_target_->y(); ++i) {
         float ty = (i - c.vertex_.y()) / (b.vertex_.y() - c.vertex_.y());
-        VertexAttrs from =
-            VertexAttrs::Interpolate(c, b, ty, material_->RequireNormals(), material_->RequireTexcoords());
-        VertexAttrs to = VertexAttrs::Interpolate(c, d, ty, material_->RequireNormals(), material_->RequireTexcoords());
+        VertexAttrs from = VertexAttrs::Interpolate(c, b, ty, material_->RequireNormals(),
+                                                    material_->RequireTexcoords(), material_->RequireWorldPos());
+        VertexAttrs to = VertexAttrs::Interpolate(c, d, ty, material_->RequireNormals(), material_->RequireTexcoords(),
+                                                  material_->RequireWorldPos());
         for (int j = max<int>(ceil(from.vertex_.x()), 0); j <= to.vertex_.x() && j < render_target_->x(); ++j) {
             const float tx = (j - from.vertex_.x()) / (to.vertex_.x() - from.vertex_.x());
-            VertexAttrs attrs =
-                VertexAttrs::Interpolate(from, to, tx, material_->RequireNormals(), material_->RequireTexcoords());
-            DrawPixel(Vector2i(j, i), attrs.vertex_.z(), attrs.normal_, attrs.texcoord_);
+            VertexAttrs attrs = VertexAttrs::Interpolate(from, to, tx, material_->RequireNormals(),
+                                                         material_->RequireTexcoords(), material_->RequireWorldPos());
+            DrawPixel(Vector2i(j, i), attrs.vertex_.z(), attrs.normal_, attrs.texcoord_, attrs.world_pos_);
         }
     }
 }
@@ -220,10 +249,10 @@ bool renderer::Renderer::CullFace(const Vector3f& a, const Vector3f& b, const Ve
 }
 
 void renderer::Renderer::DrawPixel(const Vector2i& window_space_vertex, float depth, const Vector3f& normal,
-                                   const Vector2f& texcoord) {
+                                   const Vector2f& texcoord, const Vector3f& world_pos) {
     if (DepthTest(window_space_vertex, depth)) {
-        Vector4f color = material_->DrawPixel(window_space_vertex, normal, texcoord);
-        (*depth_buffer_)(window_space_vertex.x() , window_space_vertex.y()) = depth;
+        Vector4f color = material_->DrawPixel(window_space_vertex, normal, texcoord, world_pos, globals_);
+        (*depth_buffer_)(window_space_vertex.x(), window_space_vertex.y()) = depth;
         for (int i = 0; i < 4; ++i) {
             (*render_target_)(window_space_vertex.x(), window_space_vertex.y()).val[i] =
                 static_cast<char>(MathHelpers::Clamp(color[i]) * 255);

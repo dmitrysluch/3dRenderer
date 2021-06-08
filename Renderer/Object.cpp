@@ -3,15 +3,6 @@
 
 using namespace renderer;
 
-Object * Object::InstantiateWithKernel(Kernel *kernel, string name, shared_ptr<Mesh> mesh, MaterialVec material_overrides) {
-    auto obj = new Object(kernel, std::move(name), std::move(mesh), std::move(material_overrides));
-    kernel->objects_.push_back(unique_ptr<Object>(obj));
-    kernel->OnUpdate();
-    return obj;
-}
-Object * Object::InstantiateWithKernel(Kernel* kernel, string name, shared_ptr<Mesh> mesh) {
-    return InstantiateWithKernel(kernel, std::move(name), std::move(mesh), MaterialVec());
-}
 const shared_ptr<Mesh>& Object::GetMesh() const { return mesh_; }
 void Object::SetMesh(const shared_ptr<Mesh>& mesh) {
     mesh_ = mesh;
@@ -38,3 +29,25 @@ void Object::SetTransform(const SceneTransform& transform) {
 SceneTransformProxy Object::TransformProxy() {
     return SceneTransformProxy(&transform_, [this](){ kernel_->OnUpdate(); });
 }
+Object * Object::InstantiateWithKernel(Kernel *kernel, string name, shared_ptr<Mesh> mesh, MaterialVec material_overrides) {
+    auto obj = new Object(kernel, std::move(name), std::move(mesh), std::move(material_overrides));
+    kernel->objects_.push_back(unique_ptr<Object>(obj));
+    kernel->OnUpdate();
+    return obj;
+}
+Object * Object::InstantiateWithKernel(Kernel* kernel, string name, shared_ptr<Mesh> mesh) {
+    return InstantiateWithKernel(kernel, std::move(name), std::move(mesh), MaterialVec());
+}
+Object *Object::GetComponentInKernel(Kernel &kernel, const string& name) {
+    auto iter = find_if(kernel.objects_.begin(), kernel.objects_.end(),
+                        [name](const unique_ptr<Object>& object) { return object->GetName() == name; });
+    assert(iter != kernel.objects_.end() && "Object not found");
+    return iter->get();
+}
+const Object *Object::GetComponentInKernel(const Kernel &kernel, const string& name) {
+    auto iter = find_if(kernel.objects_.cbegin(), kernel.objects_.cend(),
+                        [name](const unique_ptr<Object>& object) { return object->GetName() == name; });
+    assert(iter != kernel.objects_.cend() && "Object not found");
+    return iter->get();
+}
+

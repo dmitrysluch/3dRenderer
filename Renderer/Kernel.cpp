@@ -1,4 +1,5 @@
 #include "include/Kernel.h"
+
 #include <algorithm>
 
 using std::string;
@@ -6,20 +7,6 @@ renderer::Kernel::Kernel(std::unique_ptr<renderer::IView> view) : view_(std::mov
     renderer_.SetRenderTarget(&view_->GetRenderTarget());
     renderer_.SetDepthBuffer(&view_->GetDepthBuffer());
 }
-renderer::Object* renderer::Kernel::GetObjectPtr(const string& name) {
-    auto iter = find_if(objects_.cbegin(), objects_.cend(),
-                        [name](const unique_ptr<Object>& object) { return object->GetName() == name; });
-    assert(iter != objects_.cend() && "Object not found");
-    return iter->get();
-}
-const renderer::Object* renderer::Kernel::GetObjectPtr(const string& name) const {
-    auto iter = find_if(objects_.cbegin(), objects_.cend(),
-                        [name](const unique_ptr<Object>& object) { return object->GetName() == name; });
-    assert(iter != objects_.cend() && "Object not found");
-    return iter->get();
-}
-renderer::Object& renderer::Kernel::GetObject(const std::string& name) { return *GetObjectPtr(name); }
-const renderer::Object& renderer::Kernel::GetObject(const std::string& name) const { return *GetObjectPtr(name); }
 void renderer::Kernel::OnUpdate() {
     if (active_) {
         Render();
@@ -28,9 +15,18 @@ void renderer::Kernel::OnUpdate() {
 void renderer::Kernel::Render() {
     assert(!cameras_.empty() && "You need at least one camera to renderer the scene");
     assert(active_camera_id_ >= 0 && active_camera_id_ < cameras_.size() && "Invalid active camera");
-    renderer_.Clear({240, 250, 255, 100}); // TODO: pass color as param
-    renderer_.SetEyeAndProjectionMatrices(cameras_[active_camera_id_]->GetTransform().GetTransformMatrix().inverse().matrix(), cameras_[active_camera_id_]->GetProjectionMatrix());
+    renderer_.Clear({240, 250, 255, 100});  // TODO: pass color as param
+    renderer_.SetEyeAndProjectionMatrices(
+        cameras_[active_camera_id_]->GetTransform().GetTransformMatrix().inverse().matrix(),
+        cameras_[active_camera_id_]->GetProjectionMatrix());
     renderer_.SetNearPlane(cameras_[active_camera_id_]->GetNearClipPlane());
+    Globals globals;
+    globals.camera = cameras_[active_camera_id_]->GetTransform().position;
+    globals.lights.resize(lights_.size());
+    for (int i = 0; i < lights_.size(); ++i) {
+        globals.lights[i] = lights_[i]->GetDirAndColor();
+    }
+    renderer_.SetGlobals(&globals);
     for (const auto& object : objects_) {
         renderer_.SetObjectTransform(object->GetTransform().GetTransformMatrix());
         auto mesh = object->GetMesh();

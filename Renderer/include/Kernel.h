@@ -2,6 +2,7 @@
 #include <memory>
 
 #include "Camera.h"
+#include "DirectionalLight.h"
 #include "IView.h"
 #include "Object.h"
 #include "Renderer.h"
@@ -10,16 +11,21 @@ namespace renderer {
 class Kernel {
    public:
     explicit Kernel(unique_ptr<IView> view);
-    [[nodiscard]] Object *GetObjectPtr(const string &name);
-    [[nodiscard]] const Object *GetObjectPtr(const string &name) const;
-    [[nodiscard]] Object &GetObject(const string &name);
-    [[nodiscard]] const Object &GetObject(const string &name) const;
     [[nodiscard]] bool IsActive() const { return active_; }
     void SetActive(bool active);
-    template <typename T, typename ...TArgs>
-    T * Instantiate(TArgs&& ... args) {
+    template <typename T, typename... TArgs>
+    T* Instantiate(TArgs&&... args) {
         return T::InstantiateWithKernel(this, std::forward<TArgs>(args)...);
     }
+    template <typename T>
+    T* GetComponent() {
+        return T::GetComponentInKernel(*this);
+    }
+    template <typename T>
+    const T* GetComponent() const {
+        return T::GetComponentInKernel(*this);
+    }
+
    private:
     // Objects, Lights and Camera call OnUpdate to cause rerender
     void OnUpdate();
@@ -32,11 +38,13 @@ class Kernel {
     // destroyed after kernel was destroyed.
     std::vector<unique_ptr<Object>> objects_;
     std::vector<unique_ptr<Camera>> cameras_;
+    std::vector<unique_ptr<DirectionalLight>> lights_;
     int active_camera_id_ = 0;
     unique_ptr<IView> view_;
     Renderer renderer_;
 
     friend class Object;
     friend class Camera;
+    friend class DirectionalLight;
 };
 }  // namespace renderer

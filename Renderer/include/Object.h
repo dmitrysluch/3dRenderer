@@ -27,7 +27,8 @@ class Object {
     }
     static Object *InstantiateWithKernel(Kernel *kernel, string name, shared_ptr<Mesh> mesh, MaterialVec material_overrides);
     static Object *InstantiateWithKernel(Kernel *kernel, string name, shared_ptr<Mesh> mesh);
-
+    static Object *GetComponentInKernel(Kernel &kernel, const string &name);
+    static const Object *GetComponentInKernel(const Kernel &kernel, const string &name);
     Kernel *kernel_;
     string name_;
     SceneTransform transform_;

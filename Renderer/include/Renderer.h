@@ -1,13 +1,14 @@
 #pragma once
 #include <Eigen/Dense>
-#include <vector>
-#include <exception>
 #include <algorithm>
+#include <exception>
+#include <vector>
 
 #include "BasicMaterial.h"
-#include "MathHelpers.h"
 #include "Buffer2D.h"
 #include "Color.h"
+#include "Globals.h"
+#include "MathHelpers.h"
 
 namespace renderer {
 using namespace Eigen;
@@ -18,6 +19,7 @@ class Renderer {
     void SetMaterial(const BasicMaterial *material) { material_ = material; }
     void SetVertices(const vector<Vector3f> *vertices) {
         vertices_ = vertices;
+        world_space_vertices_.resize(vertices->size());
         screen_space_vertices_.resize(vertices->size());
     }
     [[nodiscard]] const vector<Vector3f> *GetVertices() const { return vertices_; }
@@ -27,16 +29,15 @@ class Renderer {
         transformed_normals_.resize(normals_->size());
     }
     [[nodiscard]] const vector<Vector2f> *GetTexcoords() const { return texcoords_; }
-    void SetTexcoords(const vector<Vector2f> *texcoords) {
-        texcoords_ = texcoords;
-    }
+    void SetTexcoords(const vector<Vector2f> *texcoords) { texcoords_ = texcoords; }
     [[nodiscard]] const vector<int> *GetIndices() const { return indices_; }
     void SetIndices(const vector<int> *indices) { indices_ = indices; }
     void SetDepthBuffer(Buffer2D<float> *depth_buffer) { depth_buffer_ = depth_buffer; }
     [[nodiscard]] Buffer2D<float> *GetDepthBuffer() { return depth_buffer_; }
     void SetRenderTarget(Buffer2D<ColorRGBA32> *render_target) {
         render_target_ = render_target;
-        viewport_matrix_ << render_target_->x()/2.f, 0.f, 0.f, render_target_->x()/2.f, 0.f, render_target_->y()/2.f, 0.f, render_target_->y()/2.f, 0.f, 0.f, 1.f, 0.f, 0.f, 0.f, 0.f, 1.f;
+        viewport_matrix_ << render_target_->x() / 2.f, 0.f, 0.f, render_target_->x() / 2.f, 0.f,
+            render_target_->y() / 2.f, 0.f, render_target_->y() / 2.f, 0.f, 0.f, 1.f, 0.f, 0.f, 0.f, 0.f, 1.f;
     }
     [[nodiscard]] Buffer2D<ColorRGBA32> *GetRenderTarget() { return render_target_; }
     void SetObjectTransform(const Matrix4f &object) { object_ = object; }
@@ -47,19 +48,22 @@ class Renderer {
     }
     [[nodiscard]] float GetNearPlane() const { return near_plane_; }
     void SetNearPlane(float near_plane) { near_plane_ = near_plane; }
+    void SetGlobals(const Globals *globals) { globals_ = globals; }
     void DrawIndexed();
     // Fills render target with specified color and depth with maximum depth
     void Clear(ColorRGBA32 color);
+
    private:
     struct VertexAttrs {
         Vector3f vertex_;
         Vector3f normal_;
         Vector2f texcoord_;
+        Vector3f world_pos_;
         float inv_z_;
         VertexAttrs() = default;
         VertexAttrs(const Vector3f &vertex) : vertex_(vertex) {}
-        static VertexAttrs Interpolate(const VertexAttrs& a, const VertexAttrs& b, float t, bool interpolate_normals,
-                                       bool interpolate_texcoords);
+        static VertexAttrs Interpolate(const VertexAttrs &a, const VertexAttrs &b, float t, bool interpolate_normals,
+                                       bool interpolate_texcoords, bool interpolate_world_pos);
     };
 
     Matrix4f object_, eye_, projection_, viewport_matrix_;
@@ -67,27 +71,31 @@ class Renderer {
 
     const BasicMaterial *material_ = nullptr;
 
-    const vector<Vector3f> *vertices_=nullptr;
+    const vector<Vector3f> *vertices_ = nullptr;
     const vector<Vector3f> *normals_ = nullptr;
     const vector<Vector2f> *texcoords_ = nullptr;
     const vector<int> *indices_ = nullptr;
-    
+    const Globals *globals_ = nullptr;
+
+    vector<Vector3f> world_space_vertices_;
     vector<Vector4f> screen_space_vertices_;
     vector<Vector3f> transformed_normals_;
 
-    Buffer2D<float> *depth_buffer_=nullptr;
-    Buffer2D<ColorRGBA32> *render_target_=nullptr;
+    Buffer2D<float> *depth_buffer_ = nullptr;
+    Buffer2D<ColorRGBA32> *render_target_ = nullptr;
 
     void TransformVertices();
     void DrawAllAfterTransformation();
     /// Clips triangle on indices a, b, c
     /// @param [in] a, b, c - indices of triangle vertices
-    /// @param [out] attrs - array of at least 6 elements, vertices and attributes of resulting triangle (or tw triangles)
+    /// @param [out] attrs - array of at least 6 elements, vertices and attributes of resulting triangle (or tw
+    /// triangles)
     /// @returns Returns number of vertices in resulting polygon
-    inline int ClipTriangle (int a, int b, int c, VertexAttrs *attrs) const;
+    inline int ClipTriangle(int a, int b, int c, VertexAttrs *attrs) const;
     inline void DrawTriangle(int a, int b, int c);
     inline void DrawTriangleClipped(VertexAttrs &a, VertexAttrs &b, VertexAttrs &c);
-    inline void DrawPixel(const Vector2i &view_port_vertex, float depth, const Vector3f &normal, const Vector2f &texcoord);
+    inline void DrawPixel(const Vector2i &view_port_vertex, float depth, const Vector3f &normal,
+                          const Vector2f &texcoord, const Vector3f &world_pos);
     static inline bool CullFace(const Vector3f &a, const Vector3f &b, const Vector3f &c);
     inline bool DepthTest(const Vector2i &a, float depth);
 };

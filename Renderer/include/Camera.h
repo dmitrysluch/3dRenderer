@@ -28,10 +28,12 @@ class Camera {
     [[nodiscard]] SceneTransformProxy TransformProxy();
     void SetTransform(const SceneTransform &transform);
     [[nodiscard]] const std::string &GetName() const { return name_; }
-
+    void Activate();
    private:
     Camera(Kernel *kernel, std::string name);
     static Camera *InstantiateWithKernel(Kernel *kernel, std::string name);
+    static Camera *GetComponentInKernel(Kernel &kernel, const std::string &name);
+    static const Camera *GetComponentInKernel(const Kernel &kernel, const std::string &name);
 
     Kernel *kernel_;
     std::string name_;

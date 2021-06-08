@@ -7,17 +7,19 @@ namespace renderer {
 class TexturedUnlitMaterial : public BasicMaterial {
    public:
     TexturedUnlitMaterial() = delete;
-    TexturedUnlitMaterial(const TexturedUnlitMaterial &) = delete;
-    TexturedUnlitMaterial& operator = (const TexturedUnlitMaterial &) = delete;
+    TexturedUnlitMaterial(const TexturedUnlitMaterial&) = delete;
+    TexturedUnlitMaterial& operator=(const TexturedUnlitMaterial&) = delete;
     explicit TexturedUnlitMaterial(const Buffer2D<ColorRGBA32>& texture) : texture_(texture) {}
-    explicit TexturedUnlitMaterial(Buffer2D<ColorRGBA32> &&texture) : texture_(texture) {}
-    virtual bool RequireNormals() const { return false; }
-    virtual bool RequireTexcoords() const { return true; };
-    virtual Vector4f DrawPixel(const Vector2i& window_space_vertex, const Vector3f& normal,
-                               const Vector2f& texcoord) const {
+    explicit TexturedUnlitMaterial(Buffer2D<ColorRGBA32>&& texture) : texture_(texture) {}
+    [[nodiscard]] bool RequireNormals() const override { return false; }
+    [[nodiscard]] bool RequireTexcoords() const override { return true; };
+    [[nodiscard]] bool RequireWorldPos() const override { return false; };
+    virtual Vector4f DrawPixel(const Vector2i& window_space_vertex, const Vector3f& normal, const Vector2f& texcoord,
+                               const Vector3f& world_pos, const Globals*) const override {
         return BilinearSampler::SamplePixelBilinear(texture_, texcoord);
     }
-private:
+
+   private:
     Buffer2D<ColorRGBA32> texture_;
 };
-}
+}  // namespace renderer

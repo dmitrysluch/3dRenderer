@@ -17,6 +17,15 @@ SceneTransformProxy Camera::TransformProxy() {
 Camera::Camera(Kernel *kernel, std::string name) : kernel_(kernel), name_(std::move(name)) {
     assert(name_.find_first_not_of(" \t\n\r") != std::string::npos && "Name must have not whitespace characters");
 }
+void Camera::Activate() {
+    for (int i = 0; i < kernel_->cameras_.size(); ++i) {
+        if (kernel_->cameras_[i].get() == this) {
+            kernel_->active_camera_id_ = i;
+            break;
+        }
+    }
+    kernel_->OnUpdate();
+}
 Camera* Camera::InstantiateWithKernel(Kernel *kernel, string name) {
     auto cam = new Camera(kernel, std::move(name));
     kernel->cameras_.push_back(unique_ptr<Camera>(cam));
@@ -25,4 +34,16 @@ Camera* Camera::InstantiateWithKernel(Kernel *kernel, string name) {
     }
     kernel->OnUpdate();
     return cam;
+}
+Camera *Camera::GetComponentInKernel(Kernel &kernel, const string& name) {
+    auto iter = find_if(kernel.cameras_.begin(), kernel.cameras_.end(),
+                        [name](const unique_ptr<Camera>& camera) { return camera->GetName() == name; });
+    assert(iter != kernel.cameras_.end() && "Camera not found");
+    return iter->get();
+}
+const Camera *Camera::GetComponentInKernel(const Kernel &kernel, const string& name) {
+    auto iter = find_if(kernel.cameras_.cbegin(), kernel.cameras_.cend(),
+                        [name](const unique_ptr<Camera>& camera) { return camera->GetName() == name; });
+    assert(iter != kernel.cameras_.cend() && "Camera not found");
+    return iter->get();
 }

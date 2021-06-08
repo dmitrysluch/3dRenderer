@@ -2,7 +2,6 @@
 #include <BasicMaterial.h>
 #include <Camera.h>
 #include <DrawNormals.h>
-#include <FixedDirectional.h>
 #include <TexturedUnlitMaterial.h>
 #include <Kernel.h>
 #include <Object.h>
@@ -13,6 +12,9 @@
 #include <windows.h>
 #include <fstream>
 #include <sstream>
+#include <Phong.h>
+#include <BlinnPhong.h>
+#include <DirectionalLight.h>
 
 using namespace renderer;
 using namespace Eigen;
@@ -39,19 +41,20 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrev, LPSTR szCmdLine, int sw) {
     fin.close();
 
     auto amogus_mesh = AssimpBindings::LoadMeshFromFile("amogus.obj", false);
-    auto amogus_mat = MaterialVec({make_shared<TexturedUnlitMaterial>(std::move(amogus_texture))});
+    auto amogus_mat = MaterialVec({make_shared<BlinnPhong>(std::move(amogus_texture), 100.0f, 1.0f)});
 
     vector<Object *> amogus(5);
     for (int i = 0; i < 3; ++i) {
         amogus[i] = kernel.Instantiate<Object>("Amogus " + to_string(i), amogus_mesh, amogus_mat);
-        amogus[i]->TransformProxy().SetPosition(Vector3f(i - 1.0, 0, -3));
+        amogus[i]->TransformProxy().SetPosition(Vector3f(i - 1.0f, 0, -3));
         amogus[i]->TransformProxy().SetRotation((Quaternionf)AngleAxisf(AI_MATH_PI_F, Vector3f::UnitY()));
     }
+    kernel.Instantiate<DirectionalLight>("Main light", SceneTransform(), Vector3f(1, -1, 1), Vector3f(1, 1, 1));
     kernel.SetActive(true);  // Now Kernel will rerender on each object change
     int curr_amogus = 0;
     while (true) {
         SDL_Event event;
-        while (SDL_PollEvent(&event)) {
+        while (SDL_WaitEvent(&event)) {
             if (event.type == SDL_QUIT) {
                 SDL_DestroyWindow(main_window);
                 SDL_Quit();
