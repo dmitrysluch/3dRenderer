@@ -35,15 +35,16 @@ include_directories(include)
 # compile assimp and copy assimp.lib and assimp.dll (assimp.so and assimp.so.a) to the same folder that executable or just install assimp globally
 target_link_libraries(Renderer_cmake assimp SDL2)
 
-add_executable(ConsoleRenderer_cmake WIN32
-        ConsoleRenderer/main.cpp)
+add_executable(RendererExample_cmake WIN32
+        RendererExample/main.cpp RendererExample/CameraController.cpp RendererExample/CameraController.h RendererExample/CameraController.cpp RendererExample/AmogusController.cpp RendererExample/AmogusController.h)
 
-target_include_directories(ConsoleRenderer_cmake PUBLIC Renderer/include)
-target_link_libraries(ConsoleRenderer_cmake Renderer_cmake)
+target_include_directories(RendererExample_cmake PUBLIC Renderer/include)
+target_link_libraries(RendererExample_cmake Renderer_cmake)
 
 add_executable(RendererTests_cmake RendererTests/CameraTest.cpp)
 target_include_directories(RendererTests_cmake PUBLIC Renderer/include gtest/include)
 target_link_libraries(RendererTests_cmake Renderer_cmake gtestd gtest_maind)
+
 
 file(GLOB FILES_TO_COPY ${PROJECT_SOURCE_DIR}/copy_to_build_dir/*)
 file(COPY ${FILES_TO_COPY} DESTINATION ${PROJECT_BINARY_DIR}/)

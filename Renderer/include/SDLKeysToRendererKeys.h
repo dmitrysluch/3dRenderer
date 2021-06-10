@@ -2,7 +2,7 @@
 #include <SDL2/SDL_keycode.h>
 
 namespace renderer {
-    KeyCode SDLKeyCodeToRendrKeyCode (SDL_KeyCode arg) {
+    KeyCode SDLKeyCodeToRendrKeyCode (SDL_Keycode arg) {
         switch (arg) {
             case SDLK_0:
                 return RENDR_0;
@@ -246,8 +246,6 @@ namespace renderer {
                 return RENDR_KP_DBLAMPERSAND;
             case SDLK_KP_DECIMAL:
                 return RENDR_KP_DECIMAL;
-            case SDLK_KP_DIVID:
-                return RENDR_KP_DIVID;
             case SDLK_KP_E:
                 return RENDR_KP_E;
             case SDLK_KP_ENTER:

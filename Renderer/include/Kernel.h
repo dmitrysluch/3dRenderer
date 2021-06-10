@@ -18,14 +18,16 @@ class Kernel {
         return T::InstantiateWithKernel(this, std::forward<TArgs>(args)...);
     }
     template <typename T>
-    T* GetComponent() {
-        return T::GetComponentInKernel(*this);
+    T* GetComponent(const std::string &str) {
+        return T::GetComponentInKernel(*this, str);
     }
     template <typename T>
-    const T* GetComponent() const {
-        return T::GetComponentInKernel(*this);
+    const T* GetComponent(const std::string &str) const {
+        return T::GetComponentInKernel(*this, str);
     }
-
+    [[nodiscard]] pair<int, int> GetScreenSize() const {
+        return {view_->GetRenderTarget().x(), view_->GetRenderTarget().y()};
+    }
    private:
     // Objects, Lights and Camera call OnUpdate to cause rerender
     void OnUpdate();

@@ -6,6 +6,26 @@ using namespace renderer;
 using namespace Eigen;
 using namespace std;
 
+void Camera::SetFovAngle(float fov_angle) {
+    fov_angle_ = fov_angle;
+    kernel_->OnUpdate();
+}
+void Camera::SetFovAngleDeg(float fov_angle) {
+    fov_angle_ = fov_angle * static_cast<float>(EIGEN_PI) / 180.f;
+    kernel_->OnUpdate();
+}
+void Camera::SetAspectRatio(float aspect_ratio) {
+    aspect_ratio_ = aspect_ratio;
+    kernel_->OnUpdate();
+}
+void Camera::SetFarClipPlane(float far_clip_plane) {
+    far_clip_plane_ = far_clip_plane;
+    kernel_->OnUpdate();
+}
+void Camera::SetNearClipPlane(float near_clip_plane) {
+    near_clip_plane_ = near_clip_plane;
+    kernel_->OnUpdate();
+}
 const SceneTransform& Camera::GetTransform() const { return transform_; }
 void Camera::SetTransform(const SceneTransform& transform) {
     transform_ = transform;
