@@ -1,0 +1,7 @@
+# Файл CLANG-FORMAT, созданный Visual Studio
+
+BasedOnStyle: Google
+IndentWidth: 4
+ColumnLimit: 120
+AlwaysBreakTemplateDeclarations: true
+
