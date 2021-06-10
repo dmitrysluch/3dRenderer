@@ -1,6 +1,6 @@
 # 3D Renderer с нуля
 
-![Screenshot](./img.png)
+![Screenshot](img.png)
 
 ## Как это собрать
 ### Под виндой
