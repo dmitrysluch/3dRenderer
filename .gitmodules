@@ -1,0 +1,3 @@
+[submodule "include/Library"]
+	path = include/Library
+	url = https://github.com/DimaTrushin/Library.git
